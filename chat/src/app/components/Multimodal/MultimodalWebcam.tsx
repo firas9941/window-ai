@@ -18,6 +18,8 @@ export interface MultimodalWebcamProps {
   onLiveFrame: (blob: Blob, prompt: string) => string;
   /** Called once per streamed chunk for the assistant message with the given id. */
   onLiveChunk: (streamingId: string, chunk: string) => void;
+  /** Optional controls rendered at the START of the tools row (e.g. an Upload button). */
+  leadingTools?: React.ReactNode;
 }
 
 // ---------------------------------------------------------------------------
@@ -46,6 +48,7 @@ export const MultimodalWebcam: React.FC<MultimodalWebcamProps> = ({
   setIsLiveActive,
   onLiveFrame,
   onLiveChunk,
+  leadingTools,
 }) => {
   // ---------------------------------------------------------------------------
   // Refs — non-reactive state (no re-render on change)
@@ -417,7 +420,8 @@ export const MultimodalWebcam: React.FC<MultimodalWebcamProps> = ({
       {/* ------------------------------------------------------------------ */}
       {/* Tools row — always rendered                                          */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        {leadingTools}
         {/* "Take photo" pill button */}
         <button
           onClick={handleTakePhoto}

@@ -119,7 +119,7 @@ export const MultimodalInput: React.FC<MultimodalInputProps> = ({
       )}
       <textarea
         className={`w-full resize-none bg-transparent outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm font-medium min-h-[48px] max-h-[120px] overflow-y-auto focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800${isLiveActive ? ' opacity-60 cursor-not-allowed' : ''}`}
-        placeholder="Drop an image or paste (⌘V) — then ask me about it"
+        placeholder="Upload, drop, or paste (⌘V) an image — then ask me about it"
         value={text}
         onChange={(e) => setText(e.target.value)}
         onPaste={handlePaste}

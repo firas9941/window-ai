@@ -42,7 +42,7 @@ export const MultimodalTranscript: React.FC<MultimodalTranscriptProps> = ({
               d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
             />
           </svg>
-          <p className="font-medium">Drop an image or paste (⌘V) to get started</p>
+          <p className="font-medium">Upload, drop, or paste (⌘V) an image to get started</p>
         </div>
       </div>
     );

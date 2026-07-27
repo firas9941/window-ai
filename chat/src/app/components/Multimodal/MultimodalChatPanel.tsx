@@ -33,6 +33,7 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
   // dragCounterRef prevents flicker when cursor crosses child elements (Pattern 4 / Pitfall 4)
   const dragCounterRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Map of userMessageId → Blob for retry re-prompt (Option B — no Message type edit needed)
   const pendingResendBlobsRef = useRef<Map<string, Blob>>(new Map());
@@ -234,6 +235,25 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
     setPendingImage(file);
   };
 
+  // ---------------------------------------------------------------------------
+  // Upload: click-to-choose file picker. Reuses the same validate → setPendingImage
+  // path as drop/paste. Resetting value='' lets the user re-pick the same file.
+  // ---------------------------------------------------------------------------
+  const handleUploadClick = () => fileInputRef.current?.click();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const result = validateImageFile(file);
+    if (!result.valid) {
+      setMimeError(result.error ?? 'Invalid file');
+      return;
+    }
+    setMimeError(null);
+    setPendingImage(file);
+  };
+
   return (
     <div
       className={[
@@ -299,6 +319,43 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
               setIsLiveActive={setIsLiveActive}
               onLiveFrame={handleLiveFrame}
               onLiveChunk={handleLiveChunk}
+              leadingTools={
+                <>
+                  <button
+                    type="button"
+                    onClick={handleUploadClick}
+                    disabled={isLiveActive || pageState === 'unavailable' || pageState === 'prompting'}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                  >
+                    {/* Upload (tray + up-arrow) SVG icon */}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    Upload image
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={handleFileChange}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                </>
+              }
             />
           }
         />
