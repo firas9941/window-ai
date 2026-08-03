@@ -28,8 +28,9 @@ export const RAIL_NAV: NavItem[] = [
   { label: 'MCP Client', href: '/mcp-client', icon: 'M4 5h16v5H4zM4 14h16v5H4M7.5 7.5h.01M7.5 16.5h.01' },
   { label: 'Generative UI', href: '/generative-ui', icon: 'M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-4.9L6 9.3l4.3-1.7zM17.5 14.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z' },
 
-  // Advanced — operational tooling for on-device AI (Evaluation joins here later).
+  // Advanced — operational tooling for on-device AI.
   { label: 'Observability', href: '/observability', icon: 'M4 18a8 8 0 0116 0M12 18l4-4.5M12 18h.01', section: 'Advanced' },
+  { label: 'Evaluation', href: '/evaluation', icon: 'M9 12l2 2 4-4M12 3a9 9 0 100 18 9 9 0 000-18', section: 'Advanced' },
 ];
 
 /**

@@ -73,10 +73,10 @@ const newPaneId = () =>
  */
 const LiveTranslatePage: React.FC = () => {
   const location = useLocation();
-  const isDocs = location.pathname.startsWith('/live-translate/docs');
+  const isDocs = location.pathname.endsWith('-api-documentation');
   useSEOData(
     isDocs ? seoConfigs.liveTranslateDocs : seoConfigs.liveTranslate,
-    isDocs ? '/live-translate/docs' : '/live-translate',
+    isDocs ? '/live-translate/live-translate-api-documentation' : '/live-translate/live-translate-demo',
   );
 
   const supported = isLiveTranscriptionSupported();
@@ -353,16 +353,13 @@ const LiveTranslatePage: React.FC = () => {
     </>
   );
 
-  // Tabs ordering: Docs FIRST, Demo SECOND.
-  // Tabs.tsx matches currentPath.includes(tab.path) — the demo tab has path ''
-  // which matches everything, so the docs tab (path '/docs') MUST come first so
-  // /live-translate/docs wins over '' before the fallback demo match.
+  // Docs tab first; every tab has a real path and Tabs derives the active tab from the URL.
   const tabs = useMemo(
     () => [
       {
         id: 'docs',
         label: 'API Documentation',
-        path: '/docs',
+        path: '/live-translate-api-documentation',
         content: (
           <div className="max-w-none">
             <DocsRenderer docFile="Live-Translate-API.md" initOpen={true} />
@@ -372,7 +369,7 @@ const LiveTranslatePage: React.FC = () => {
       {
         id: 'demo',
         label: 'Demo',
-        path: '',
+        path: '/live-translate-demo',
         content: demoContent,
       },
     ],

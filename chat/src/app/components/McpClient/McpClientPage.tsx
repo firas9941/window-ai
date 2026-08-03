@@ -22,11 +22,10 @@ import type { McpConnection } from '../../services/McpClientService';
  */
 export const McpClientPage: React.FC = () => {
   const location = useLocation();
-  // Exact-prefix match (startsWith, NOT includes) so /mcp-client/docs wins.
-  const isDocs = location.pathname.startsWith('/mcp-client/docs');
+  const isDocs = location.pathname.endsWith('-api-documentation');
   useSEOData(
     isDocs ? seoConfigs.mcpClientDocs : seoConfigs.mcpClient,
-    isDocs ? '/mcp-client/docs' : '/mcp-client',
+    isDocs ? '/mcp-client/mcp-client-api-documentation' : '/mcp-client/mcp-client-demo',
   );
 
   const [connection, setConnection] = useState<McpConnection | null>(null);
@@ -94,15 +93,13 @@ export const McpClientPage: React.FC = () => {
     [connection, selectedTools],
   );
 
-  // Docs tab MUST come first: Tabs matches currentPath.includes(tab.path) and
-  // the client tab's path '' matches everything, so '/docs' has to be checked
-  // before the '' fallback wins.
+  // Docs tab first; every tab has a real path and Tabs derives the active tab from the URL.
   const tabs = useMemo(
     () => [
       {
         id: 'docs',
         label: 'API Documentation',
-        path: '/docs',
+        path: '/mcp-client-api-documentation',
         content: (
           <div className="max-w-none">
             <DocsRenderer docFile="MCP-Client-API.md" initOpen={true} />
@@ -112,7 +109,7 @@ export const McpClientPage: React.FC = () => {
       {
         id: 'client',
         label: 'Client',
-        path: '',
+        path: '/mcp-client-demo',
         content: (
           <div className="space-y-6">
             <ConnectionPanel

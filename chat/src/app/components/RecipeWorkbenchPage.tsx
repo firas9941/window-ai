@@ -113,10 +113,10 @@ export const RecipeWorkbenchPage: React.FC = () => {
   // deps only re-fire when the branch flips, not on every render.
   // Use startsWith (NOT includes) per RESEARCH Pitfall 6 — exact-prefix match.
   const location = useLocation();
-  const isDocs = location.pathname.startsWith('/webmcp/docs');
+  const isDocs = location.pathname.endsWith('-api-documentation');
   useSEOData(
     isDocs ? seoConfigs.webmcpDocs : seoConfigs.webmcp,
-    isDocs ? '/webmcp/docs' : '/webmcp',
+    isDocs ? '/webmcp/webmcp-api-documentation' : '/webmcp/webmcp-demo',
   );
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -254,15 +254,13 @@ export const RecipeWorkbenchPage: React.FC = () => {
     setActiveRecipeId(id);
   }, []);
 
-  // Tabs ordering gotcha (PATTERNS §RecipeWorkbenchPage): the docs tab MUST be
-  // listed BEFORE the workbench tab so `/webmcp/docs` wins the
-  // `currentPath.includes(tab.path)` lookup over the workbench's empty path.
+  // Docs tab first; every tab has a real path and Tabs derives the active tab from the URL.
   const tabs = useMemo(
     () => [
       {
         id: 'docs',
         label: 'API Documentation',
-        path: '/docs',
+        path: '/webmcp-api-documentation',
         content: (
           <div className="max-w-none">
             <DocsRenderer docFile="WebMCP-API.md" initOpen={true} />
@@ -272,7 +270,7 @@ export const RecipeWorkbenchPage: React.FC = () => {
       {
         id: 'workbench',
         label: 'Workbench',
-        path: '',
+        path: '/webmcp-demo',
         content: (
           <WorkbenchPanel
             recipes={recipes}

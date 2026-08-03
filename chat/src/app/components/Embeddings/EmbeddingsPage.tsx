@@ -10,11 +10,10 @@ import ConstellationTab from './ConstellationTab';
 
 export const EmbeddingsPage: React.FC = () => {
   const location = useLocation();
-  // Use startsWith (NOT includes) — exact-prefix match, mirroring the other pages.
-  const isDocs = location.pathname.startsWith('/embeddings/docs');
+  const isDocs = location.pathname.endsWith('-api-documentation');
   useSEOData(
     isDocs ? seoConfigs.embeddingsDocs : seoConfigs.embeddings,
-    isDocs ? '/embeddings/docs' : '/embeddings',
+    isDocs ? '/embeddings/embeddings-api-documentation' : '/embeddings/embeddings-cross-lingual',
   );
 
   const [unavailable, setUnavailable] = useState(false);
@@ -31,16 +30,13 @@ export const EmbeddingsPage: React.FC = () => {
     };
   }, []);
 
-  // Tabs ordering: Docs FIRST. Tabs.tsx matches currentPath.includes(tab.path);
-  // the two demo tabs have path '' (falsy → skipped by the matcher), so the docs
-  // tab (path '/docs') must precede them so /embeddings/docs resolves to Docs and
-  // /embeddings falls back to the default demo tab.
+  // Docs tab first; every tab has a real path and Tabs derives the active tab from the URL.
   const tabs = useMemo(
     () => [
       {
         id: 'docs',
         label: 'API Documentation',
-        path: '/docs',
+        path: '/embeddings-api-documentation',
         content: (
           <div className="max-w-none">
             <DocsRenderer docFile="Embeddings-API.md" initOpen={true} />
@@ -50,13 +46,13 @@ export const EmbeddingsPage: React.FC = () => {
       {
         id: 'cross-lingual',
         label: 'Cross-Lingual Search',
-        path: '',
+        path: '/embeddings-cross-lingual',
         content: <CrossLingualTab />,
       },
       {
         id: 'constellation',
         label: 'Constellation',
-        path: '',
+        path: '/embeddings-constellation',
         content: <ConstellationTab />,
       },
     ],

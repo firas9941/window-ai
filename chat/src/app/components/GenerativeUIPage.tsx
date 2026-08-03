@@ -19,10 +19,10 @@ export const GenerativeUIPage: React.FC = () => {
   // the Rules of Hooks invariant is preserved.
   // Use startsWith (NOT includes) per RESEARCH Pitfall 6 — exact-prefix match.
   const location = useLocation();
-  const isDocs = location.pathname.startsWith('/generative-ui/docs');
+  const isDocs = location.pathname.endsWith('-api-documentation');
   useSEOData(
     isDocs ? seoConfigs.generativeUIDocs : seoConfigs.generativeUI,
-    isDocs ? '/generative-ui/docs' : '/generative-ui',
+    isDocs ? '/generative-ui/generative-ui-api-documentation' : '/generative-ui/generative-ui-demo',
   );
 
   // Mount-time seed: inserts any recipe not already in IndexedDB.
@@ -66,16 +66,13 @@ export const GenerativeUIPage: React.FC = () => {
     </div>
   );
 
-  // Tabs ordering: Docs FIRST, Workbench SECOND.
-  // Tabs.tsx matches `currentPath.includes(tab.path)` — the workbench tab has path ''
-  // which matches everything, so the docs tab (path '/docs') MUST come first so
-  // /generative-ui/docs wins over '' before the fallback workbench match.
+  // Docs tab first; every tab has a real path and Tabs derives the active tab from the URL.
   const tabs = useMemo(
     () => [
       {
         id: 'docs',
         label: 'API Documentation',
-        path: '/docs',
+        path: '/generative-ui-api-documentation',
         content: (
           <div className="max-w-none">
             <DocsRenderer docFile="Generative-UI-API.md" initOpen={true} />
@@ -85,7 +82,7 @@ export const GenerativeUIPage: React.FC = () => {
       {
         id: 'workbench',
         label: 'Workbench',
-        path: '',
+        path: '/generative-ui-demo',
         content: workbenchContent,
       },
     ],

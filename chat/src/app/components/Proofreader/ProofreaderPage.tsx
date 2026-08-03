@@ -25,11 +25,10 @@ const DEFAULT_DEMO_TEXT =
 
 export const ProofreaderPage: React.FC = () => {
   const location = useLocation();
-  // Use startsWith (NOT includes) per RESEARCH Pitfall 6 — exact-prefix match
-  const isDocs = location.pathname.startsWith('/proofreader/docs');
+  const isDocs = location.pathname.endsWith('-api-documentation');
   useSEOData(
     isDocs ? seoConfigs.proofreaderDocs : seoConfigs.proofreader,
-    isDocs ? '/proofreader/docs' : '/proofreader',
+    isDocs ? '/proofreader/proofreader-api-documentation' : '/proofreader/proofreader-demo',
   );
 
   const [pageState, setPageState] = useState<PageState>('idle');
@@ -195,22 +194,19 @@ export const ProofreaderPage: React.FC = () => {
     </>
   );
 
-  // Tabs ordering: Docs FIRST, Workbench SECOND.
-  // Tabs.tsx matches currentPath.includes(tab.path) — the workbench tab has path ''
-  // which matches everything, so the docs tab (path '/docs') MUST come first so
-  // /proofreader/docs wins over '' before the fallback workbench match.
+  // Docs tab first; every tab has a real path and Tabs derives the active tab from the URL.
   const tabs = useMemo(
     () => [
       {
         id: 'docs',
         label: 'API Documentation',
-        path: '/docs',
+        path: '/proofreader-api-documentation',
         content: docsContent,
       },
       {
         id: 'workbench',
         label: 'Workbench',
-        path: '',
+        path: '/proofreader-demo',
         content: workbenchContent,
       },
     ],

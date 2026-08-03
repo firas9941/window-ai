@@ -24,11 +24,10 @@ export type Message = {
 
 export const MultimodalPage: React.FC = () => {
   const location = useLocation();
-  // Use startsWith (NOT includes) per RESEARCH Pitfall 6 — exact-prefix match
-  const isDocs = location.pathname.startsWith('/multimodal/docs');
+  const isDocs = location.pathname.endsWith('-api-documentation');
   useSEOData(
     isDocs ? seoConfigs.multimodalDocs : seoConfigs.multimodal,
-    isDocs ? '/multimodal/docs' : '/multimodal',
+    isDocs ? '/multimodal/multimodal-api-documentation' : '/multimodal/multimodal-demo',
   );
 
   const [pageState, setPageState] = useState<PageState>('idle');
@@ -86,16 +85,13 @@ export const MultimodalPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Tabs ordering: Docs FIRST, Chat SECOND.
-  // Tabs.tsx matches currentPath.includes(tab.path) — the chat tab has path ''
-  // which matches everything, so the docs tab (path '/docs') MUST come first so
-  // /multimodal/docs wins over '' before the fallback chat match.
+  // Docs tab first; every tab has a real path and Tabs derives the active tab from the URL.
   const tabs = useMemo(
     () => [
       {
         id: 'docs',
         label: 'API Documentation',
-        path: '/docs',
+        path: '/multimodal-api-documentation',
         content: (
           <div className="max-w-none">
             <DocsRenderer docFile="Multimodal-API.md" initOpen={true} />
@@ -105,7 +101,7 @@ export const MultimodalPage: React.FC = () => {
       {
         id: 'chat',
         label: 'Chat',
-        path: '',
+        path: '/multimodal-demo',
         content: (
           <MultimodalChatPanel
             messages={messages}

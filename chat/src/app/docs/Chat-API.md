@@ -13,8 +13,8 @@ Follow these steps to enable Gemini Nano and the Prompt API flags for local expe
 5. Relaunch Chrome.
 
 ### Confirm availability of Gemini Nano
-1. Open DevTools and send `(await LanguageModel.capabilities()).available;` in the console.
-2. If this returns “_readily_”, then you are all set.
+1. Open DevTools and send `await LanguageModel.availability();` in the console.
+2. If this returns `"available"`, then you are all set. (Other values: `"downloadable"`, `"downloading"`, `"unavailable"`.)
 
 
 ### Zero-shot prompting
@@ -110,24 +110,26 @@ Because of their special behavior of being preserved on context window overflow,
 
 ### Configuration of per-session options
 
-In addition to the `systemPrompt` and `initialPrompts` options shown above, the currently-configurable options are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). More information about the values for these parameters can be found using the `capabilities()` API explained [below](#capabilities-detection).
+In addition to the `initialPrompts` option shown above, the currently-configurable options are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). Default and maximum values for these parameters come from `LanguageModel.params()`, explained [below](#checking-availability-and-parameters).
 
 ```js
 const customSession = await LanguageModel.create({
+  outputLanguage: 'en',
   temperature: 0.8,
   topK: 10
 });
 
-const capabilities = await LanguageModel.capabilities();
+const params = await LanguageModel.params();
 const slightlyHighTemperatureSession = await LanguageModel.create({
+  outputLanguage: 'en',
   temperature: Math.max(
-    capabilities.defaultTemperature * 1.2,
-    capabilities.maxTemperature
+    params.defaultTemperature * 1.2,
+    params.maxTemperature
   ),
   topK: 10
 });
 
-// capabilities also contains defaultTopK and maxTopK.
+// params also contains defaultTopK and maxTopK.
 ```
 
 ### Session persistence and cloning
@@ -230,22 +232,23 @@ Note that because sessions are stateful, and prompts can be queued, aborting a s
 A given language model session will have a maximum number of tokens it can process. Developers can check their current usage and progress toward that limit by using the following properties on the session object:
 
 ```js
-console.log(`${session.tokensSoFar}/${session.maxTokens} (${session.tokensLeft} left)`);
+// Current names (older Chrome / MDN used inputUsage / inputQuota):
+console.log(`${session.contextUsage}/${session.contextWindow} (${session.contextWindow - session.contextUsage} left)`);
 ```
 
-To know how many tokens a string will consume, without actually processing it, developers can use the `countPromptTokens()` method:
+To know how many tokens a string will consume, without actually processing it, developers can use the `measureInputUsage()` method (older builds called this `countPromptTokens()`):
 
 ```js
-const numTokens = await session.countPromptTokens(promptString);
+const numTokens = await session.measureInputUsage(promptString);
 ```
 
 Some notes on this API:
 
 * We do not expose the actual tokenization to developers since that would make it too easy to depend on model-specific details.
 * Implementations must include in their count any control tokens that will be necessary to process the prompt, e.g. ones indicating the start or end of the input.
-* The counting process can be aborted by passing an `AbortSignal`, i.e. `session.countPromptTokens(promptString, { signal })`.
+* The counting process can be aborted by passing an `AbortSignal`, i.e. `session.measureInputUsage(promptString, { signal })`.
 
-It's possible to send a prompt that causes the context window to overflow. That is, consider a case where `session.countPromptTokens(promptString) > session.tokensLeft` before calling `session.prompt(promptString)`, and then the web developer calls `session.prompt(promptString)` anyway. In such cases, the initial portions of the conversation with the language model will be removed, one prompt/response pair at a time, until enough tokens are available to process the new prompt. The exception is the [system prompt](#system-prompts), which is never removed. If it's not possible to remove enough tokens from the conversation history to process the new prompt, then the `prompt()` or `promptStreaming()` call will fail with an `"QuotaExceededError"` `DOMException` and nothing will be removed.
+It's possible to send a prompt that causes the context window to overflow. That is, consider a case where `session.measureInputUsage(promptString) > (session.contextWindow - session.contextUsage)` before calling `session.prompt(promptString)`, and then the web developer calls `session.prompt(promptString)` anyway. In such cases, the initial portions of the conversation with the language model will be removed, one prompt/response pair at a time, until enough tokens are available to process the new prompt. The exception is the [system prompt](#system-prompts), which is never removed. If it's not possible to remove enough tokens from the conversation history to process the new prompt, then the `prompt()` or `promptStreaming()` call will fail with an `"QuotaExceededError"` `DOMException` and nothing will be removed.
 
 Such overflows can be detected by listening for the `"contextoverflow"` event on the session:
 
@@ -255,31 +258,32 @@ session.addEventListener("contextoverflow", () => {
 });
 ```
 
-### Capabilities detection
+### Checking availability and parameters
 
 In all our above examples, we call `LanguageModel.create()` and assume it will always succeed.
 
-However, sometimes a language model needs to be downloaded before the API can be used. In such cases, immediately calling `create()` will start the download, which might take a long time. The capabilities API gives you insight into the download status of the model:
+However, sometimes a language model needs to be downloaded before the API can be used. Call `LanguageModel.availability()` to check the current state before calling `create()`:
 
 ```js
-const capabilities = await LanguageModel.capabilities();
-console.log(capabilities.available);
+const availability = await LanguageModel.availability();
+console.log(availability);
 ```
 
-The `capabilities.available` property is a string that can take one of three values:
+`availability()` returns one of four strings:
 
-* `"no"`, indicating the device or browser does not support prompting a language model at all.
-* `"after-download"`, indicating the device or browser supports prompting a language model, but it needs to be downloaded before it can be used.
-* `"readily"`, indicating the device or browser supports prompting a language model and it’s ready to be used without any downloading steps.
+* `"unavailable"`, indicating the device or browser does not support prompting a language model at all.
+* `"downloadable"`, indicating it is supported, but the model needs to be downloaded before it can be used.
+* `"downloading"`, indicating the model is currently downloading.
+* `"available"`, indicating it is ready to be used without any downloading steps.
 
-In the `"after-download"` case, developers might want to have users confirm before you call `create()` to start the download, since doing so uses up significant bandwidth and users might not be willing to wait for a large download before using the site or feature.
+In the `"downloadable"` case, developers might want to have users confirm before you call `create()` to start the download, since doing so uses up significant bandwidth. Note that regardless of the return value, `create()` might also fail if the download or session creation fails.
 
-Note that regardless of the return value of `available`, `create()` might also fail, if either the download fails or the session creation fails.
+Separately, `LanguageModel.params()` returns the model's sampling parameters:
 
-The capabilities API also contains other information about the model:
-
-* `defaultTemperature`, `maxTemperature`, `defaultTopK`, and `maxTopK` properties giving information about the model's sampling parameters.
-* `languageAvailable(languageTag)`, which returns `"no"`, `"after-download"`, or `"readily"` to indicate whether the model supports conversing in a given human language.
+```js
+const params = await LanguageModel.params();
+// { defaultTopK, maxTopK, defaultTemperature, maxTemperature }
+```
 
 ### Download progress
 
@@ -289,7 +293,7 @@ In cases where the model needs to be downloaded as part of creation, you can mon
 const session = await LanguageModel.create({
   monitor(m) {
     m.addEventListener("downloadprogress", e => {
-      console.log(`Downloaded ${e.loaded} of ${e.total} bytes.`);
+      console.log(`Downloaded ${Math.round(e.loaded * 100)}%`); // e.loaded is a 0→1 fraction
     });
   }
 });
@@ -299,105 +303,35 @@ If the download fails, then `downloadprogress` events will stop being emitted, a
 
 ## Detailed design
 
-### Full API surface in Web IDL
+### Current API surface
 
-```webidl
-// Shared self.ai APIs
+The Prompt API is exposed as the bare global `LanguageModel` — there is no `self.ai` namespace, and the earlier-draft members `capabilities()`, `countPromptTokens()`, `tokensSoFar`/`maxTokens`/`tokensLeft`, and the `systemPrompt` create option no longer exist.
 
-partial interface WindowOrWorkerGlobalScope {
-  [Replaceable, SecureContext] readonly attribute AI ai;
-};
+```ts
+// Static
+LanguageModel.availability(options?): Promise<"unavailable" | "downloadable" | "downloading" | "available">;
+LanguageModel.params(): Promise<{ defaultTopK: number; maxTopK: number; defaultTemperature: number; maxTemperature: number }>;
+LanguageModel.create(options?): Promise<LanguageModel>;
 
-[Exposed=(Window,Worker), SecureContext]
-interface AI {
-  readonly attribute AILanguageModelFactory languageModel;
-};
+interface LanguageModelCreateOptions {
+  outputLanguage?: string;                 // e.g. 'en' — recommended in Chrome 147+
+  temperature?: number;
+  topK?: number;
+  initialPrompts?: { role: "system" | "user" | "assistant"; content: string }[];
+  responseFormat?: object;                 // JSON Schema for structured output
+  monitor?: (m: { addEventListener(type: "downloadprogress", cb: (e: ProgressEvent) => void): void }) => void;
+  signal?: AbortSignal;
+}
 
-[Exposed=(Window,Worker), SecureContext]
-interface AICreateMonitor : EventTarget {
-  attribute EventHandler ondownloadprogress;
-
-  // Might get more stuff in the future, e.g. for
-  // https://github.com/explainers-by-googlers/prompt-api/issues/4
-};
-
-callback AICreateMonitorCallback = undefined (AICreateMonitor monitor);
-
-enum AICapabilityAvailability { "readily", "after-download", "no" };
-```
-
-```webidl
-// Language Model
-
-[Exposed=(Window,Worker), SecureContext]
-interface AILanguageModelFactory {
-  Promise<AILanguageModel> create(optional AILanguageModelCreateOptions options = {});
-  Promise<AILanguageModelCapabilities> capabilities();
-};
-
-[Exposed=(Window,Worker), SecureContext]
-interface AILanguageModel : EventTarget {
-  Promise<DOMString> prompt(AILanguageModelPromptInput input, optional AILanguageModelPromptOptions options = {});
-  ReadableStream promptStreaming(AILanguageModelPromptInput input, optional AILanguageModelPromptOptions options = {});
-
-  Promise<unsigned long long> countPromptTokens(AILanguageModelPromptInput input, optional AILanguageModelPromptOptions options = {});
-  readonly attribute unsigned long long maxTokens;
-  readonly attribute unsigned long long tokensSoFar;
-  readonly attribute unsigned long long tokensLeft;
-
-  readonly attribute unsigned long topK;
-  readonly attribute float temperature;
-
-  attribute EventHandler oncontextoverflow;
-
-  Promise<AILanguageModel> clone(optional AILanguageModelCloneOptions options = {});
-  undefined destroy();
-};
-
-[Exposed=(Window,Worker), SecureContext]
-interface AILanguageModelCapabilities {
-  readonly attribute AICapabilityAvailability available;
-  AICapabilityAvailability languageAvailable(DOMString languageTag);
-
-  // Always null if available === "no"
-  readonly attribute unsigned long? defaultTopK;
-  readonly attribute unsigned long? maxTopK;
-  readonly attribute float? defaultTemperature;
-  readonly attribute float? maxTemperature;
-};
-
-dictionary AILanguageModelCreateOptions {
-  AbortSignal signal;
-  AICreateMonitorCallback monitor;
-
-  DOMString systemPrompt;
-  sequence<AILanguageModelInitialPrompt> initialPrompts;
-  [EnforceRange] unsigned long topK;
-  float temperature;
-};
-
-dictionary AILanguageModelInitialPrompt {
-  required AILanguageModelInitialPromptRole role;
-  required DOMString content;
-};
-
-dictionary AILanguageModelPrompt {
-  required AILanguageModelPromptRole role;
-  required DOMString content;
-};
-
-dictionary AILanguageModelPromptOptions {
-  AbortSignal signal;
-};
-
-dictionary AILanguageModelCloneOptions {
-  AbortSignal signal;
-};
-
-typedef (DOMString or AILanguageModelPrompt or sequence<AILanguageModelPrompt>) AILanguageModelPromptInput;
-
-enum AILanguageModelInitialPromptRole { "system", "user", "assistant" };
-enum AILanguageModelPromptRole { "user", "assistant" };
+// Session (the instance returned by create())
+session.prompt(input, options?): Promise<string>;
+session.promptStreaming(input, options?): ReadableStream<string>;
+session.measureInputUsage(input, options?): Promise<number>;
+session.clone(options?): Promise<LanguageModel>;
+session.destroy(): void;
+readonly session.contextUsage: number;     // older name: inputUsage
+readonly session.contextWindow: number;    // older name: inputQuota
+// event: "contextoverflow"
 ```
 
 ### Instruction-tuned versus base models

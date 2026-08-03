@@ -15,6 +15,7 @@ import {MultimodalPage} from './components/Multimodal/MultimodalPage';
 import {McpClientPage} from './components/McpClient/McpClientPage';
 import {EmbeddingsPage} from './components/Embeddings/EmbeddingsPage';
 import {ObservabilityPage} from './components/Observability/ObservabilityPage';
+import {EvaluationPage} from './components/Evaluation/EvaluationPage';
 import {AppContext} from "./context";
 import {ThemeProvider} from "./context/ThemeContext";
 import {ShellProvider} from "./components/AppShell/ShellContext";
@@ -37,6 +38,31 @@ const BareLayout: React.FC = () => (
     <Outlet/>
   </ShellProvider>
 );
+
+/**
+ * The single routing convention for every demo page. For a feature at `/x` with
+ * tab paths like `/x-api-documentation` and `/x-demo`, this emits:
+ *   - `/x`            → redirect to the first tab (the canonical docs URL)
+ *   - `/x/x-*`        → the page (one route per tab; `Tabs` derives the active
+ *                        tab from the URL)
+ *   - `/x/docs`       → redirect to the canonical docs URL (back-compat for the
+ *                        older `/x/docs` links)
+ * Every feature goes through this, so navigation + routing has ONE shape.
+ */
+const demoRoutes = (
+  base: string,
+  Component: React.ComponentType,
+  tabPaths: string[],
+): React.ReactElement[] => {
+  const canonical = `${base}${tabPaths[0]}`;
+  return [
+    <Route key={base} path={base} element={<Navigate to={canonical} replace/>}/>,
+    ...tabPaths.map((p) => (
+      <Route key={`${base}${p}`} path={`${base}${p}`} element={<Component/>}/>
+    )),
+    <Route key={`${base}/docs`} path={`${base}/docs`} element={<Navigate to={canonical} replace/>}/>,
+  ];
+};
 
 const AppRouter: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -64,62 +90,21 @@ const AppRouter: React.FC = () => {
             {/* Capabilities / browser-status page (formerly at "/"). */}
             <Route path="/status" element={<CheckBrowserPage/>}/>
 
-            {/* Chat routes */}
-            <Route path="/chat" element={<Navigate to="/chat/chat-api-documentation" replace/>}/>
-            <Route path="/chat/chat-api-documentation" element={<ChatPage/>}/>
-            <Route path="/chat/chat-demo" element={<ChatPage/>}/>
-
-            {/* Tool Calling routes */}
-            <Route path="/tool-calling" element={<Navigate to="/tool-calling/tool-calling-api-documentation" replace/>}/>
-            <Route path="/tool-calling/tool-calling-api-documentation" element={<ToolCallingPage/>}/>
-            <Route path="/tool-calling/tool-calling-demo" element={<ToolCallingPage/>}/>
-
-            {/* Summary routes */}
-            <Route path="/summary" element={<Navigate to="/summary/summary-api-documentation" replace/>}/>
-            <Route path="/summary/summary-api-documentation" element={<Summary/>}/>
-            <Route path="/summary/summary-demo" element={<Summary/>}/>
-
-            {/* Translate routes */}
-            <Route path="/translate" element={<Navigate to="/translate/translate-api-documentation" replace/>}/>
-            <Route path="/translate/translate-api-documentation" element={<TranslatePage/>}/>
-            <Route path="/translate/translate-demo" element={<TranslatePage/>}/>
-
-            {/* Live Translate routes */}
-            <Route path="/live-translate" element={<LiveTranslatePage/>}/>
-            <Route path="/live-translate/docs" element={<LiveTranslatePage/>}/>
-
-            {/* WebMCP routes */}
-            <Route path="/webmcp" element={<RecipeWorkbenchPage/>}/>
-            <Route path="/webmcp/docs" element={<RecipeWorkbenchPage/>}/>
-
-            {/* Generative UI routes */}
-            <Route path="/generative-ui" element={<GenerativeUIPage/>}/>
-            <Route path="/generative-ui/docs" element={<GenerativeUIPage/>}/>
-
-            {/* Proofreader routes */}
-            <Route path="/proofreader" element={<ProofreaderPage/>}/>
-            <Route path="/proofreader/docs" element={<ProofreaderPage/>}/>
-
-            {/* Multimodal routes */}
-            <Route path="/multimodal" element={<MultimodalPage/>}/>
-            <Route path="/multimodal/docs" element={<MultimodalPage/>}/>
-
-            {/* MCP Client routes */}
-            <Route path="/mcp-client" element={<McpClientPage/>}/>
-            <Route path="/mcp-client/docs" element={<McpClientPage/>}/>
-
-            {/* Embeddings routes */}
-            <Route path="/embeddings" element={<EmbeddingsPage/>}/>
-            <Route path="/embeddings/docs" element={<EmbeddingsPage/>}/>
-
-            {/* Observability routes (Advanced) */}
-            <Route path="/observability" element={<ObservabilityPage/>}/>
-            <Route path="/observability/docs" element={<ObservabilityPage/>}/>
-
-            {/* Writer/Rewriter routes */}
-            <Route path="/writer" element={<Navigate to="/writer/writer-api-documentation" replace/>}/>
-            <Route path="/writer/writer-api-documentation" element={<WriteRewritePage/>}/>
-            <Route path="/writer/writer-demo" element={<WriteRewritePage/>}/>
+            {/* Every demo page uses the one routing convention (see demoRoutes). */}
+            {demoRoutes('/chat', ChatPage, ['/chat-api-documentation', '/chat-demo'])}
+            {demoRoutes('/tool-calling', ToolCallingPage, ['/tool-calling-api-documentation', '/tool-calling-demo'])}
+            {demoRoutes('/summary', Summary, ['/summary-api-documentation', '/summary-demo'])}
+            {demoRoutes('/translate', TranslatePage, ['/translate-api-documentation', '/translate-demo'])}
+            {demoRoutes('/writer', WriteRewritePage, ['/writer-api-documentation', '/writer-demo'])}
+            {demoRoutes('/live-translate', LiveTranslatePage, ['/live-translate-api-documentation', '/live-translate-demo'])}
+            {demoRoutes('/webmcp', RecipeWorkbenchPage, ['/webmcp-api-documentation', '/webmcp-demo'])}
+            {demoRoutes('/generative-ui', GenerativeUIPage, ['/generative-ui-api-documentation', '/generative-ui-demo'])}
+            {demoRoutes('/proofreader', ProofreaderPage, ['/proofreader-api-documentation', '/proofreader-demo'])}
+            {demoRoutes('/multimodal', MultimodalPage, ['/multimodal-api-documentation', '/multimodal-demo'])}
+            {demoRoutes('/mcp-client', McpClientPage, ['/mcp-client-api-documentation', '/mcp-client-demo'])}
+            {demoRoutes('/embeddings', EmbeddingsPage, ['/embeddings-api-documentation', '/embeddings-cross-lingual', '/embeddings-constellation'])}
+            {demoRoutes('/observability', ObservabilityPage, ['/observability-api-documentation', '/observability-demo'])}
+            {demoRoutes('/evaluation', EvaluationPage, ['/evaluation-api-documentation', '/evaluation-demo'])}
 
             <Route path="*" element={<Navigate to="/" replace/>}/>
           </Route>

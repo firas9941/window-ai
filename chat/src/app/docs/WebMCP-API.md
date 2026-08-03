@@ -301,7 +301,7 @@ The realistic risk is a malicious page convincing the user to install or trust a
 ## Limitations
 
 1. **Non-streaming handlers**: tool `execute` returns a single Promise; there is no streaming-tool surface in the current spec. Long-running operations should report progress via a separate channel (e.g. updating page state that an external observer can read).
-2. **No polyfill in this demo**: this site uses native `navigator.modelContext` only. Browsers without the flag see the `MissingFlagBanner`; they do not get a JS shim.
+2. **No polyfill in this demo**: this site uses native `document.modelContext` (falling back to the deprecated `navigator.modelContext` on Chrome 146–149) only. Browsers without the flag see the `MissingFlagBanner`; they do not get a JS shim.
 3. **Spec is moving**: this guide pins to the April 23, 2026 W3C Draft Community Group Report. Earlier drafts had `provideContext` / `unregisterTool` / `clearContext` (removed in March 2026); future drafts may add or rename surface area before stabilization.
 4. **Same-origin only**: tools registered on one origin are not visible to pages on other origins. Cross-origin tool sharing is out of scope for this API.
 5. **Single document scope**: tools live on the document that registered them. Closing the tab unregisters everything (the implicit `AbortSignal` of page unload). There is no service-worker or background-page registration path.

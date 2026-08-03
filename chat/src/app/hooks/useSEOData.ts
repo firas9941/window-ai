@@ -164,5 +164,17 @@ export const seoConfigs = {
     title: 'Observability API Docs — logging & tracing for on-device AI | Chrome AI APIs',
     description: 'How to add logging and tracing to Chrome\'s built-in AI: capture latency, TTFT, contextUsage, availability, and errors, then ship to OpenTelemetry, Sentry, or Langfuse. Framework-agnostic, no backend required.',
     keywords: 'observability docs, tracing, logging, OpenTelemetry gen_ai, Sentry, Langfuse, contextUsage, TTFT, downloadprogress, availability, Gemini Nano, Chrome built-in AI'
+  },
+  // Must match prerender-react.js seoConfigs['/evaluation'] verbatim — single source of truth.
+  evaluation: {
+    title: 'Evaluation — Test on-device AI answer quality with a stability rate | Chrome AI APIs',
+    description: 'Evaluate Chrome\'s built-in on-device AI (Gemini Nano): golden datasets, rule-based checks, LLM-as-judge, and a 5–10-run stability rate. Run a live mini-eval in the browser, then wire it into CI with Playwright. No backend.',
+    keywords: 'AI evaluation, evals, golden dataset, rule-based eval, LLM-as-judge, stability rate, Playwright, Vitest, CI, on-device AI, Gemini Nano, Chrome built-in AI'
+  },
+  // Must match prerender-react.js seoConfigs['/evaluation/docs'] verbatim — single source of truth.
+  evaluationDocs: {
+    title: 'Evaluation API Docs — golden sets, judges, stability rate & CI | Chrome AI APIs',
+    description: 'How to evaluate Chrome built-in AI answer quality: build a golden set, score with rule-based checks and an LLM judge, report a stability rate, and run it against window.ai in CI with Playwright. Framework-agnostic.',
+    keywords: 'evaluation docs, evals, golden dataset, rule-based scorer, LLM-as-judge, stability rate, Playwright, Vitest, promptfoo, evalite, CI, Gemini Nano, Chrome built-in AI'
   }
 } as const;

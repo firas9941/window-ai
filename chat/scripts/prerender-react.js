@@ -50,7 +50,7 @@ const routes = [
 
   // Live Translate route (single-page, no docs/demo split)
   { path: '/live-translate', filename: 'live-translate.html' },
-  { path: '/live-translate/docs', filename: 'live-translate-docs.html' },
+  { path: '/live-translate/live-translate-api-documentation', filename: 'live-translate-api-documentation.html' },
 
   // Writer routes
   { path: '/writer', filename: 'writer.html' },
@@ -59,30 +59,34 @@ const routes = [
 
   // WebMCP routes
   { path: '/webmcp', filename: 'webmcp.html' },
-  { path: '/webmcp/docs', filename: 'webmcp-docs.html' },
+  { path: '/webmcp/webmcp-api-documentation', filename: 'webmcp-api-documentation.html' },
 
   // Generative UI routes
   { path: '/generative-ui', filename: 'generative-ui.html' },
-  { path: '/generative-ui/docs', filename: 'generative-ui-docs.html' },
+  { path: '/generative-ui/generative-ui-api-documentation', filename: 'generative-ui-api-documentation.html' },
 
   // Proofreader routes
   { path: '/proofreader', filename: 'proofreader.html' },
-  { path: '/proofreader/docs', filename: 'proofreader-docs.html' },
+  { path: '/proofreader/proofreader-api-documentation', filename: 'proofreader-api-documentation.html' },
 
   // Multimodal routes
   { path: '/multimodal', filename: 'multimodal.html' },
-  { path: '/multimodal/docs', filename: 'multimodal-docs.html' },
+  { path: '/multimodal/multimodal-api-documentation', filename: 'multimodal-api-documentation.html' },
 
   // MCP Client routes
   { path: '/mcp-client', filename: 'mcp-client.html' },
-  { path: '/mcp-client/docs', filename: 'mcp-client-docs.html' },
+  { path: '/mcp-client/mcp-client-api-documentation', filename: 'mcp-client-api-documentation.html' },
   // Embeddings routes
   { path: '/embeddings', filename: 'embeddings.html' },
-  { path: '/embeddings/docs', filename: 'embeddings-docs.html' },
+  { path: '/embeddings/embeddings-api-documentation', filename: 'embeddings-api-documentation.html' },
 
   // Observability (Advanced)
   { path: '/observability', filename: 'observability.html' },
-  { path: '/observability/docs', filename: 'observability-docs.html' },
+  { path: '/observability/observability-api-documentation', filename: 'observability-api-documentation.html' },
+
+  // Evaluation (Advanced)
+  { path: '/evaluation', filename: 'evaluation.html' },
+  { path: '/evaluation/evaluation-api-documentation', filename: 'evaluation-api-documentation.html' },
 ];
 
 // Build configuration
@@ -361,7 +365,7 @@ function getSEODataForRoute(routePath) {
           'Live speech-to-text fanned into dual simultaneous translations',
       },
     },
-    '/live-translate/docs': {
+    '/live-translate/live-translate-api-documentation': {
       title:
         'Live Voice Translation Docs — Web Speech + Translator API guide | Chrome AI APIs',
       description:
@@ -429,7 +433,7 @@ function getSEODataForRoute(routePath) {
         description: 'Page-side tools demo built on navigator.modelContext',
       },
     },
-    '/webmcp/docs': {
+    '/webmcp/webmcp-api-documentation': {
       title: 'WebMCP API Documentation - Recipe Workbench guide | Chrome AI APIs',
       description: 'Documentation for the WebMCP Recipe Workbench demo. Walks through navigator.modelContext, registerTool, and the page-side tool descriptor.',
       keywords: 'WebMCP documentation, navigator.modelContext API, registerTool, page-side tools docs, JSON Schema tools',
@@ -451,7 +455,7 @@ function getSEODataForRoute(routePath) {
         description: 'On-device recipe-card carousel via sandboxed iframe and WebMCP tool results',
       },
     },
-    '/generative-ui/docs': {
+    '/generative-ui/generative-ui-api-documentation': {
       title: 'Generative UI Docs — MCP Apps wire format + bidirectional pattern | Chrome AI APIs',
       description: 'How to register UI-returning tools and hidden helpers with navigator.modelContext, sandboxed iframes, and JSON-RPC postMessage bridge — SEP-1865 reference.',
       keywords: 'MCP Apps documentation, SEP-1865, navigator.modelContext, registerTool, _meta.ui.resourceUri, sandboxed iframe, JSON-RPC postMessage, visibility annotation, hidden helpers, recipe carousel',
@@ -473,7 +477,7 @@ function getSEODataForRoute(routePath) {
         description: 'On-device grammar and spelling correction with Gemini Nano',
       },
     },
-    '/proofreader/docs': {
+    '/proofreader/proofreader-api-documentation': {
       title: 'Proofreader API Docs — surface, corrections shape, language support | Chrome AI APIs',
       description: 'Gemini Nano proofreads your text on-device with grammar, spelling, capitalization, and punctuation corrections. Three output styles, five languages, zero network.',
       keywords: 'Proofreader API docs, ProofreaderCorrection, ProofreadResult, correctionExplanationLanguage, expectedInputLanguages, Chrome 146 Canary, on-device AI',
@@ -495,7 +499,7 @@ function getSEODataForRoute(routePath) {
         description: 'On-device image understanding with Gemini Nano',
       },
     },
-    '/multimodal/docs': {
+    '/multimodal/multimodal-api-documentation': {
       title: 'Multimodal API Docs — expectedInputs, image types, webcam-live pattern | Chrome AI APIs',
       description: 'Drag, paste, or capture an image — Gemini Nano answers your questions about it on-device with zero network. Chrome 148+ stable or flag-gated Canary.',
       keywords: 'Multimodal API docs, expectedInputs, image types, webcam-live, LanguageModel, promptStreaming, content parts, ImageBitmap, Chrome 148',
@@ -517,7 +521,7 @@ function getSEODataForRoute(routePath) {
         description: 'Browser MCP client that chats with a remote MCP server via the built-in LLM',
       },
     },
-    '/mcp-client/docs': {
+    '/mcp-client/mcp-client-api-documentation': {
       title: 'MCP Client API Docs — Streamable HTTP transport + agent loop | Chrome AI APIs',
       description: 'How the browser MCP client connects over Streamable HTTP with a bearer token, lists tools, and dispatches them from a built-in-LLM responseFormat agent loop.',
       keywords: 'MCP client docs, Model Context Protocol, StreamableHTTPClientTransport, listTools, callTool, CORS, bearer token, responseFormat agent loop, Gemini Nano',
@@ -539,7 +543,7 @@ function getSEODataForRoute(routePath) {
         description: 'On-device semantic vectors with SemanticEmbedder for cross-lingual search and clustering',
       },
     },
-    '/embeddings/docs': {
+    '/embeddings/embeddings-api-documentation': {
       title: 'Embeddings API Docs — SemanticEmbedder surface, taskType, Matryoshka dims | Chrome AI APIs',
       description: 'How to use Chrome\'s SemanticEmbedder: availability, create, embed with taskType, and Matryoshka dimension truncation for on-device similarity and clustering. Chrome 152+ Canary, desktop only.',
       keywords: 'Embeddings API docs, SemanticEmbedder, embeddinggemma-300m, taskType, retrieval-query, retrieval-document, Matryoshka, cosine similarity, Float32Array, Chrome 152',
@@ -561,7 +565,7 @@ function getSEODataForRoute(routePath) {
         description: 'Trace, log, and monitor Chrome built-in on-device AI entirely client-side',
       },
     },
-    '/observability/docs': {
+    '/observability/observability-api-documentation': {
       title: 'Observability API Docs — logging & tracing for on-device AI | Chrome AI APIs',
       description: 'How to add logging and tracing to Chrome\'s built-in AI: capture latency, TTFT, contextUsage, availability, and errors, then ship to OpenTelemetry, Sentry, or Langfuse. Framework-agnostic, no backend required.',
       keywords: 'observability docs, tracing, logging, OpenTelemetry gen_ai, Sentry, Langfuse, contextUsage, TTFT, downloadprogress, availability, Gemini Nano, Chrome built-in AI',
@@ -570,6 +574,28 @@ function getSEODataForRoute(routePath) {
         '@type': 'TechArticle',
         name: 'Observability API Documentation',
         description: 'How to add logging and tracing to Chrome built-in on-device AI',
+      },
+    },
+    '/evaluation': {
+      title: 'Evaluation — Test on-device AI answer quality with a stability rate | Chrome AI APIs',
+      description: 'Evaluate Chrome\'s built-in on-device AI (Gemini Nano): golden datasets, rule-based checks, LLM-as-judge, and a 5–10-run stability rate. Run a live mini-eval in the browser, then wire it into CI with Playwright. No backend.',
+      keywords: 'AI evaluation, evals, golden dataset, rule-based eval, LLM-as-judge, stability rate, Playwright, Vitest, CI, on-device AI, Gemini Nano, Chrome built-in AI',
+      structuredData: {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: 'Evaluation Demo',
+        description: 'Test on-device AI answer quality with golden sets and a stability rate',
+      },
+    },
+    '/evaluation/evaluation-api-documentation': {
+      title: 'Evaluation API Docs — golden sets, judges, stability rate & CI | Chrome AI APIs',
+      description: 'How to evaluate Chrome built-in AI answer quality: build a golden set, score with rule-based checks and an LLM judge, report a stability rate, and run it against window.ai in CI with Playwright. Framework-agnostic.',
+      keywords: 'evaluation docs, evals, golden dataset, rule-based scorer, LLM-as-judge, stability rate, Playwright, Vitest, promptfoo, evalite, CI, Gemini Nano, Chrome built-in AI',
+      structuredData: {
+        '@context': 'https://schema.org',
+        '@type': 'TechArticle',
+        name: 'Evaluation API Documentation',
+        description: 'How to evaluate Chrome built-in on-device AI answer quality and run it in CI',
       },
     },
   };

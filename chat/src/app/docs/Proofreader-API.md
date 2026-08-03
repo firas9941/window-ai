@@ -17,7 +17,7 @@ A session is **language-scoped**: each one targets one or more `expectedInputLan
 
 - Chrome 150 desktop (Windows, macOS, Linux) — behind a flag
 - Requires Gemini Nano on-device (≈ 22 GB free disk, 4 GB+ VRAM)
-- Still origin trial / behind a flag as of Chrome 150 — not yet stable. Enable `chrome://flags/#proofreader-api` for local dev, or register an origin-trial token for a deployed origin.
+- Still origin trial / behind a flag as of Chrome 150 — not yet stable. Enable `chrome://flags/#proofreader-api-for-gemini-nano` for local dev, or register an origin-trial token for a deployed origin.
 
 ### Setup Instructions
 
