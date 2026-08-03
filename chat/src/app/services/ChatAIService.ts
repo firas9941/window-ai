@@ -1,3 +1,5 @@
+import { isTracingEnabled, traceCall, traceStream } from './observability';
+
 let session: LanguageModel | null = null;
 
 export const resetModel = async () => {
@@ -94,9 +96,14 @@ export const zeroShot = async (
     session = await LanguageModel.create(createOptions);
   }
 
+  // Observability (Phase A, #48): when tracing is enabled, route through the
+  // tracer to emit an AiSpan. The returned string / stream is unchanged, so
+  // production behavior (tracing off) is identical to before.
+  const active = session;
   if (!streaming) {
-    return await session.prompt(prompt);
-  } else {
-    return session.promptStreaming(prompt);
+    const runOnce = () => active.prompt(prompt);
+    return isTracingEnabled() ? traceCall('prompt', 'prompt', active, runOnce) : runOnce();
   }
+  const runStream = () => active.promptStreaming(prompt);
+  return isTracingEnabled() ? traceStream('prompt', 'prompt', active, runStream) : runStream();
 };
