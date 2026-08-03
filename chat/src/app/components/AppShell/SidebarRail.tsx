@@ -177,54 +177,72 @@ export const SidebarRail: React.FC = () => {
           )}
         </Link>
 
-        {/* Demo routes */}
-        {RAIL_NAV.map((item) => {
+        {/* Demo routes (with optional section headings, e.g. "Advanced") */}
+        {RAIL_NAV.map((item, index) => {
           const active = matchesRoute(pathname, item.href);
+          const showHeading =
+            Boolean(item.section) && item.section !== RAIL_NAV[index - 1]?.section;
           return (
-            <Link
-              key={item.href}
-              to={item.href}
-              title={item.label}
-              onClick={() => {
-                trackUserInteraction(
-                  'navigation_click',
-                  `${item.href.replace(/\//g, '')}_link`
-                );
-                closeOnMobile();
-              }}
-              className="group flex items-center gap-3 rounded-[10px] p-2.5 transition-colors hover:bg-[color:var(--surface2)]"
-              style={
-                active
-                  ? { background: 'rgba(96,165,250,.14)' }
-                  : undefined
-              }
-            >
-              <span
-                className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-[8px]"
-                style={{ background: 'var(--surface2)' }}
+            <React.Fragment key={item.href}>
+              {showHeading &&
+                (showLabels ? (
+                  <div
+                    className="px-2.5 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider"
+                    style={{ color: 'var(--fg2)' }}
+                  >
+                    {item.section}
+                  </div>
+                ) : (
+                  <div
+                    className="mx-2 my-2 border-t"
+                    style={{ borderColor: 'var(--border)' }}
+                    aria-hidden="true"
+                  />
+                ))}
+              <Link
+                to={item.href}
+                title={item.label}
+                onClick={() => {
+                  trackUserInteraction(
+                    'navigation_click',
+                    `${item.href.replace(/\//g, '')}_link`
+                  );
+                  closeOnMobile();
+                }}
+                className="group flex items-center gap-3 rounded-[10px] p-2.5 transition-colors hover:bg-[color:var(--surface2)]"
+                style={
+                  active
+                    ? { background: 'rgba(96,165,250,.14)' }
+                    : undefined
+                }
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke={active ? '#93c5fd' : '#94a3b8'}
-                  strokeWidth={1.9}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d={item.icon} />
-                </svg>
-              </span>
-              {showLabels && (
                 <span
-                  className="font-display whitespace-nowrap text-sm font-semibold"
-                  style={{ color: active ? '#dbeafe' : 'var(--fg2)' }}
+                  className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-[8px]"
+                  style={{ background: 'var(--surface2)' }}
                 >
-                  {item.label}
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={active ? '#93c5fd' : '#94a3b8'}
+                    strokeWidth={1.9}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d={item.icon} />
+                  </svg>
                 </span>
-              )}
-            </Link>
+                {showLabels && (
+                  <span
+                    className="font-display whitespace-nowrap text-sm font-semibold"
+                    style={{ color: active ? '#dbeafe' : 'var(--fg2)' }}
+                  >
+                    {item.label}
+                  </span>
+                )}
+              </Link>
+            </React.Fragment>
           );
         })}
       </nav>

@@ -79,6 +79,10 @@ const routes = [
   // Embeddings routes
   { path: '/embeddings', filename: 'embeddings.html' },
   { path: '/embeddings/docs', filename: 'embeddings-docs.html' },
+
+  // Observability (Advanced)
+  { path: '/observability', filename: 'observability.html' },
+  { path: '/observability/docs', filename: 'observability-docs.html' },
 ];
 
 // Build configuration
@@ -544,6 +548,28 @@ function getSEODataForRoute(routePath) {
         '@type': 'TechArticle',
         name: 'Embeddings API Documentation',
         description: 'Technical documentation for the SemanticEmbedder API surface, taskType, and Matryoshka dimension truncation',
+      },
+    },
+    '/observability': {
+      title: 'Observability — Trace & monitor Chrome built-in on-device AI | Chrome AI APIs',
+      description: 'Trace, log, and monitor Chrome\'s built-in on-device AI (Gemini Nano) entirely client-side — latency, TTFT, context usage, and errors. See a live trace, then learn how to add logging and tracing to your own app. No backend.',
+      keywords: 'AI observability, tracing, logging, OpenTelemetry gen_ai, Sentry, Langfuse, on-device AI, Gemini Nano, LanguageModel, TTFT, token usage, Chrome built-in AI',
+      structuredData: {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: 'Observability Demo',
+        description: 'Trace, log, and monitor Chrome built-in on-device AI entirely client-side',
+      },
+    },
+    '/observability/docs': {
+      title: 'Observability API Docs — logging & tracing for on-device AI | Chrome AI APIs',
+      description: 'How to add logging and tracing to Chrome\'s built-in AI: capture latency, TTFT, contextUsage, availability, and errors, then ship to OpenTelemetry, Sentry, or Langfuse. Framework-agnostic, no backend required.',
+      keywords: 'observability docs, tracing, logging, OpenTelemetry gen_ai, Sentry, Langfuse, contextUsage, TTFT, downloadprogress, availability, Gemini Nano, Chrome built-in AI',
+      structuredData: {
+        '@context': 'https://schema.org',
+        '@type': 'TechArticle',
+        name: 'Observability API Documentation',
+        description: 'How to add logging and tracing to Chrome built-in on-device AI',
       },
     },
   };

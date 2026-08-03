@@ -152,5 +152,17 @@ export const seoConfigs = {
     title: 'Embeddings API Docs — SemanticEmbedder surface, taskType, Matryoshka dims | Chrome AI APIs',
     description: 'How to use Chrome\'s SemanticEmbedder: availability, create, embed with taskType, and Matryoshka dimension truncation for on-device similarity and clustering. Chrome 152+ Canary, desktop only.',
     keywords: 'Embeddings API docs, SemanticEmbedder, embeddinggemma-300m, taskType, retrieval-query, retrieval-document, Matryoshka, cosine similarity, Float32Array, Chrome 152'
+  },
+  // Must match prerender-react.js seoConfigs['/observability'] verbatim — single source of truth.
+  observability: {
+    title: 'Observability — Trace & monitor Chrome built-in on-device AI | Chrome AI APIs',
+    description: 'Trace, log, and monitor Chrome\'s built-in on-device AI (Gemini Nano) entirely client-side — latency, TTFT, context usage, and errors. See a live trace, then learn how to add logging and tracing to your own app. No backend.',
+    keywords: 'AI observability, tracing, logging, OpenTelemetry gen_ai, Sentry, Langfuse, on-device AI, Gemini Nano, LanguageModel, TTFT, token usage, Chrome built-in AI'
+  },
+  // Must match prerender-react.js seoConfigs['/observability/docs'] verbatim — single source of truth.
+  observabilityDocs: {
+    title: 'Observability API Docs — logging & tracing for on-device AI | Chrome AI APIs',
+    description: 'How to add logging and tracing to Chrome\'s built-in AI: capture latency, TTFT, contextUsage, availability, and errors, then ship to OpenTelemetry, Sentry, or Langfuse. Framework-agnostic, no backend required.',
+    keywords: 'observability docs, tracing, logging, OpenTelemetry gen_ai, Sentry, Langfuse, contextUsage, TTFT, downloadprogress, availability, Gemini Nano, Chrome built-in AI'
   }
 } as const;

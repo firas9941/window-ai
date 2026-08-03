@@ -5,6 +5,12 @@ export interface NavItem {
   href: string;
   /** SVG path (`d`) for the 24×24 stroked rail icon, from the Status design. */
   icon: string;
+  /**
+   * Optional section heading this item belongs under (e.g. "Advanced").
+   * Items without a section render at the top level; the rail renders a small
+   * heading the first time a new section appears.
+   */
+  section?: string;
 }
 
 /** The rail navigation, in order, matching the Status design (icons included). */
@@ -21,6 +27,9 @@ export const RAIL_NAV: NavItem[] = [
   { label: 'WebMCP', href: '/webmcp', icon: 'M9 3v4M15 3v4M7 7h10v3a5 5 0 01-10 0zM12 15v5' },
   { label: 'MCP Client', href: '/mcp-client', icon: 'M4 5h16v5H4zM4 14h16v5H4M7.5 7.5h.01M7.5 16.5h.01' },
   { label: 'Generative UI', href: '/generative-ui', icon: 'M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 16l-1.7-4.9L6 9.3l4.3-1.7zM17.5 14.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z' },
+
+  // Advanced — operational tooling for on-device AI (Evaluation joins here later).
+  { label: 'Observability', href: '/observability', icon: 'M4 18a8 8 0 0116 0M12 18l4-4.5M12 18h.01', section: 'Advanced' },
 ];
 
 /**

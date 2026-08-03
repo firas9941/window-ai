@@ -14,6 +14,7 @@ import {ProofreaderPage} from './components/Proofreader/ProofreaderPage';
 import {MultimodalPage} from './components/Multimodal/MultimodalPage';
 import {McpClientPage} from './components/McpClient/McpClientPage';
 import {EmbeddingsPage} from './components/Embeddings/EmbeddingsPage';
+import {ObservabilityPage} from './components/Observability/ObservabilityPage';
 import {AppContext} from "./context";
 import {ThemeProvider} from "./context/ThemeContext";
 import {ShellProvider} from "./components/AppShell/ShellContext";
@@ -110,6 +111,10 @@ const AppRouter: React.FC = () => {
             {/* Embeddings routes */}
             <Route path="/embeddings" element={<EmbeddingsPage/>}/>
             <Route path="/embeddings/docs" element={<EmbeddingsPage/>}/>
+
+            {/* Observability routes (Advanced) */}
+            <Route path="/observability" element={<ObservabilityPage/>}/>
+            <Route path="/observability/docs" element={<ObservabilityPage/>}/>
 
             {/* Writer/Rewriter routes */}
             <Route path="/writer" element={<Navigate to="/writer/writer-api-documentation" replace/>}/>
