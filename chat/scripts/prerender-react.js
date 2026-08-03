@@ -680,24 +680,35 @@ function createEnhancedHTML(htmlTemplate, seoData, routePath) {
 
 function createSitemap() {
   const baseUrl = 'https://windowai.danduh.me';
+  const lastmod = new Date().toISOString().split('T')[0];
+
+  // Only list canonical, 200-returning content URLs. Deliberately excluded:
+  //  - the base `/x` paths (they 301 to the docs tab — a redirect in a sitemap
+  //    is an SEO anti-pattern), and
+  //  - interactive demo tabs (the documentation pages carry the indexable meta).
+  // This keeps the sitemap to `/`, `/status`, and each feature's docs page.
+  const inSitemap = (p) => p === '/' || p === '/status' || p.endsWith('-api-documentation');
+  const priority = (p) => (p === '/' ? '1.0' : p === '/status' ? '0.7' : '0.8');
+
+  const paths = routes.map((r) => r.path).filter(inSitemap);
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${routes
+  ${paths
     .map(
-      (route) => `
+      (p) => `
   <url>
-    <loc>${baseUrl}${route.path}</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <loc>${baseUrl}${p}</loc>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>${route.path === '/' ? '1.0' : '0.8'}</priority>
+    <priority>${priority(p)}</priority>
   </url>`,
     )
     .join('')}
 </urlset>`;
 
   fs.writeFileSync(path.join(distPath, 'sitemap.xml'), sitemap);
-  console.log('✓ Generated sitemap.xml');
+  console.log(`✓ Generated sitemap.xml (${paths.length} canonical URLs)`);
 }
 
 function createRobotsTxt() {
