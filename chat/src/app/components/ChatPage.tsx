@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import ChatBox from './ChatBox';
 import ChatInput from './ChatInput';
 import Tabs from './Tabs';
-import {getModelCapabilities, zeroShot} from '../services/ChatAIService';
+import {getModelCapabilities, zeroShot, resetSession, describeChatError, isSessionInvalidated} from '../services/ChatAIService';
 import {DocsRenderer} from "../tools/DocsRenderer";
 import {isChromeCanary} from "../tools/isCanary";
 import { useSEOData, seoConfigs } from '../hooks/useSEOData';
@@ -91,6 +91,21 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  // Show a Bot error message. If the current turn already appended a (streaming)
+  // Bot bubble, merge the note into it; otherwise append a fresh Bot bubble.
+  const showErrorMessage = (text: string) => {
+    messageIdCounter.current += 1;
+    const id = messageIdCounter.current;
+    setMessages((prevMessages) => {
+      const last = prevMessages[prevMessages.length - 1];
+      if (last && last.sender === 'Bot') {
+        const merged = last.text ? `${last.text}\n\n${text}` : text;
+        return [...prevMessages.slice(0, prevMessages.length - 1), { ...last, text: merged }];
+      }
+      return [...prevMessages, { id, text, sender: 'Bot' }];
+    });
+  };
+
   const handleUserMessage = async (text: string) => {
     const startTime = Date.now();
     setIsLoading(true);
@@ -107,7 +122,9 @@ const ChatPage: React.FC = () => {
     try {
       const response = await zeroShot(text, useStream, systemMsg, destroy);
       if (response) {
-        addMessage(response, 'Bot');
+        // Await so a mid-stream failure (e.g. the on-device session being
+        // destroyed) is caught here instead of becoming an uncaught rejection.
+        await addMessage(response, 'Bot');
         const responseTime = Date.now() - startTime;
         trackChatEvent('response_received', {
           responseTime,
@@ -118,13 +135,18 @@ const ChatPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Error getting AI response:', error);
+      // A destroyed/invalid on-device session would otherwise be reused on the
+      // next turn and keep failing — drop it so the next message starts fresh.
+      if (isSessionInvalidated(error)) {
+        resetSession();
+      }
       trackError('chat_error', {
         error: error instanceof Error ? error.message : 'Unknown error',
         useStream,
         temperature,
         hasSystemMessage: Boolean(systemMsg)
       });
-      addMessage('Sorry, I encountered an error. Please try again.', 'Bot');
+      showErrorMessage(describeChatError(error));
     } finally {
       setIsLoading(false);
     }
