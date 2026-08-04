@@ -2,22 +2,26 @@
 
 > An interactive showcase and developer reference for Chrome's built-in, on-device AI APIs (Gemini Nano). Every capability has live in-browser status detection, a runnable demo, and API documentation — all client-side, with no backend, no API keys, and no data leaving the machine.
 
-Window.AI (windowai.danduh.me) is built and maintained by Daniel Ostrovsky (@danduh). It covers the Prompt API (LanguageModel — chat, tool calling, multimodal image/audio input), Summarizer, Translator, Language Detector, Writer, Rewriter, Proofreader, on-device Embeddings (SemanticEmbedder), plus WebMCP (`document.modelContext`) and a Model Context Protocol (MCP) client. The built-in AI APIs need a recent desktop Chrome (150+) that meets the Gemini Nano hardware bar; the landing page and documentation read fine in any browser. Each page linked below opens to its API documentation, with a live demo one tab away.
+Window.AI (windowai.danduh.me) is built and maintained by Daniel Ostrovsky (@danduh). It covers the Prompt API (LanguageModel — chat, tool calling, multimodal image/audio input), Summarizer, Translator, Language Detector, Writer, Rewriter, Proofreader, on-device Embeddings (SemanticEmbedder), plus WebMCP (`document.modelContext`) and a Model Context Protocol (MCP) client — and operational guides for observability (tracing/logging) and evaluation of on-device AI. The built-in AI APIs need a recent desktop Chrome (150+) that meets the Gemini Nano hardware bar; the landing page and documentation read fine in any browser. Each page linked below opens to its API documentation, with a live demo one tab away.
 
 ## Capabilities
 - [Check your browser](https://windowai.danduh.me/status): live availability of every built-in AI API in the visitor's current browser, with per-API "how to enable" flags
-- [Chat — Prompt API / LanguageModel](https://windowai.danduh.me/chat): on-device conversation with Gemini Nano — streaming, system prompts, session state
-- [Tool calling — Prompt API](https://windowai.danduh.me/tool-calling): constrained JSON output (`responseConstraint`) and tool use for extraction, classification, and agents
-- [Multimodal — Prompt API](https://windowai.danduh.me/multimodal): image and webcam input to a prompt via `expectedInputs`
-- [Summarizer](https://windowai.danduh.me/summary): key-points, TL;DR, headline, and teaser summaries, steered per domain
-- [Translator + Language Detector](https://windowai.danduh.me/translate): on-device translation between language pairs, plus language detection
-- [Live Translate](https://windowai.danduh.me/live-translate): speech-to-live-translation combining the Web Speech API with the Translator API
-- [Writer & Rewriter](https://windowai.danduh.me/writer): generate new text from a brief, and transform existing text (tone, length, formality)
-- [Proofreader](https://windowai.danduh.me/proofreader): positioned grammar and spelling corrections — the basis for inline, Grammarly-style UIs
-- [Embeddings — SemanticEmbedder](https://windowai.danduh.me/embeddings): on-device semantic vectors (embeddinggemma-300m) for similarity search and clustering
-- [WebMCP — document.modelContext](https://windowai.danduh.me/webmcp): a page exposing its own actions as callable tools for an AI agent
-- [Generative UI](https://windowai.danduh.me/generative-ui): tool-driven interactive UI rendered inside a chat, built on WebMCP / the MCP Apps pattern
-- [MCP Client](https://windowai.danduh.me/mcp-client): chat with a remote Model Context Protocol server over Streamable HTTP, driven by the built-in LLM
+- [Chat — Prompt API / LanguageModel](https://windowai.danduh.me/chat/chat-api-documentation): on-device conversation with Gemini Nano — streaming, system prompts, session state
+- [Tool calling — Prompt API](https://windowai.danduh.me/tool-calling/tool-calling-api-documentation): constrained JSON output (`responseConstraint`) and tool use for extraction, classification, and agents
+- [Multimodal — Prompt API](https://windowai.danduh.me/multimodal/multimodal-api-documentation): image and webcam input to a prompt via `expectedInputs`
+- [Summarizer](https://windowai.danduh.me/summary/summary-api-documentation): key-points, TL;DR, headline, and teaser summaries, steered per domain
+- [Translator + Language Detector](https://windowai.danduh.me/translate/translate-api-documentation): on-device translation between language pairs, plus language detection
+- [Live Translate](https://windowai.danduh.me/live-translate/live-translate-api-documentation): speech-to-live-translation combining the Web Speech API with the Translator API
+- [Writer & Rewriter](https://windowai.danduh.me/writer/writer-api-documentation): generate new text from a brief, and transform existing text (tone, length, formality)
+- [Proofreader](https://windowai.danduh.me/proofreader/proofreader-api-documentation): positioned grammar and spelling corrections — the basis for inline, Grammarly-style UIs
+- [Embeddings — SemanticEmbedder](https://windowai.danduh.me/embeddings/embeddings-api-documentation): on-device semantic vectors (embeddinggemma-300m) for similarity search and clustering
+- [WebMCP — document.modelContext](https://windowai.danduh.me/webmcp/webmcp-api-documentation): a page exposing its own actions as callable tools for an AI agent
+- [Generative UI](https://windowai.danduh.me/generative-ui/generative-ui-api-documentation): tool-driven interactive UI rendered inside a chat, built on WebMCP / the MCP Apps pattern
+- [MCP Client](https://windowai.danduh.me/mcp-client/mcp-client-api-documentation): chat with a remote Model Context Protocol server over Streamable HTTP, driven by the built-in LLM
+
+## Advanced
+- [Observability](https://windowai.danduh.me/observability/observability-api-documentation): how to trace, log, and monitor on-device AI calls (latency, TTFT, context usage, errors) — client-side, with pointers to OpenTelemetry, Sentry, and Langfuse
+- [Evaluation](https://windowai.danduh.me/evaluation/evaluation-api-documentation): how to test on-device AI answer quality — golden sets, rule-based and LLM-as-judge scoring, a 5–10-run stability rate, and running it in CI
 
 ## Optional
 - [GitHub repository](https://github.com/danduh/window-ai): source code (React 19 + Nx), TypeScript types for `window.ai`, and a reference MCP server
