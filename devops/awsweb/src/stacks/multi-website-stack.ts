@@ -108,6 +108,43 @@ export class WebsiteStack extends cdk.Stack {
     // Note: Since we're using an imported bucket, we need to manually set the bucket policy
     // The bucket policy JSON will be provided in the stack outputs
 
+    // Viewer-request rewrite (SEO): the app uses clean, extensionless URLs
+    // (e.g. /observability, /chat/chat-api-documentation) but the prerender step
+    // writes FLAT files keyed by the last path segment (observability.html,
+    // chat-api-documentation.html). Without this, clean paths miss in S3 and fall
+    // through the 403/404 error response to index.html — so crawlers get the home
+    // page's <head> for every route (a soft-404). This maps a clean path to its
+    // flat prerendered file so each route serves its own SEO meta.
+    //
+    // Safe by construction:
+    //  - '/' is left to defaultRootObject (index.html).
+    //  - Anything whose last segment already has a '.' (assets, .html, .xml, .txt)
+    //    passes through untouched.
+    //  - Unknown routes rewrite to a missing key and still fall back to the SPA
+    //    via the existing errorResponses (no regression).
+    const rewriteToPrerendered = new cloudfront.Function(this, 'RewriteToPrerendered', {
+      comment: `Clean URL -> flat prerendered .html for ${props.domain}`,
+      code: cloudfront.FunctionCode.fromInline(
+        [
+          'function handler(event) {',
+          '  var request = event.request;',
+          '  var uri = request.uri;',
+          "  if (uri === '/') { return request; }",
+          // strip trailing slashes so "/x/" behaves like "/x"
+          "  while (uri.length > 1 && uri.charAt(uri.length - 1) === '/') {",
+          '    uri = uri.substring(0, uri.length - 1);',
+          '  }',
+          "  var lastSegment = uri.substring(uri.lastIndexOf('/') + 1);",
+          // already a file (has an extension) -> serve as-is
+          "  if (lastSegment.indexOf('.') !== -1) { return request; }",
+          // extensionless route -> matching flat prerendered file
+          "  request.uri = '/' + lastSegment + '.html';",
+          '  return request;',
+          '}',
+        ].join('\n'),
+      ),
+    });
+
     // Create CloudFront distribution
     this.distribution = new cloudfront.Distribution(this, 'Distribution', {
       defaultBehavior: {
@@ -120,6 +157,12 @@ export class WebsiteStack extends cdk.Stack {
         cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD_OPTIONS,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        functionAssociations: [
+          {
+            function: rewriteToPrerendered,
+            eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+          },
+        ],
       },
       domainNames: [props.domain],
       certificate,

@@ -40,7 +40,7 @@ if (targetSite) {
     throw new Error(`Website '${targetSite}' not found in configuration. Available sites: ${Object.keys(WEBSITES).join(', ')}`);
   }
   
-  new WebsiteStack(app, `website-${targetSite}`, {
+  new WebsiteStack(app, siteConfig.stackId ?? `website-${targetSite}`, {
     env: {
       account: process.env.CDK_DEFAULT_ACCOUNT,
       region: process.env.CDK_DEFAULT_REGION,
@@ -50,12 +50,16 @@ if (targetSite) {
     siteName: siteConfig.siteName,
     bucketName: COMMON_CONFIG.bucketName,
     certificateArn: COMMON_CONFIG.certificateArn,
-    createDefaultHtml: true, // Create default HTML when deploying new site
+    // NEVER true for a live site: the seed BucketDeployment defaults to
+    // prune:true, which would DELETE everything under the site's S3 prefix and
+    // replace it with a "Hello World" page. Real content is deployed by the
+    // GitHub workflow (S3 sync), so the seeder is never needed.
+    createDefaultHtml: false,
   });
 } else {
   // Deploy all websites when no specific site is targeted
   Object.entries(WEBSITES).forEach(([siteKey, siteConfig]) => {
-    new WebsiteStack(app, `website-${siteKey}`, {
+    new WebsiteStack(app, siteConfig.stackId ?? `website-${siteKey}`, {
       env: {
         account: process.env.CDK_DEFAULT_ACCOUNT,
         region: process.env.CDK_DEFAULT_REGION,
