@@ -19,6 +19,7 @@ export type Message = {
   role: 'user' | 'assistant';
   text: string;                // assistant streams in; user text is final
   attachedImageUrl?: string;   // user-only; object URL from URL.createObjectURL(blob)
+  attachedAudioUrl?: string;   // user-only; object URL for an attached audio clip
   error?: string;              // assistant-only; set when promptWithImage throws (Plan 02 wires this)
 };
 

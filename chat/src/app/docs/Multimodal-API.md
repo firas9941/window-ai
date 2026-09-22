@@ -38,6 +38,33 @@ if (status === "unavailable") {
 }
 ```
 
+### Audio Input
+
+`LanguageModel` also accepts **audio** input parts. Pass `{ type: 'audio' }` in `expectedInputs`, then send an `AudioBuffer`, `Blob`, or `ArrayBuffer` as an audio content part. Audio input **requires a GPU** and has its own availability, so probe it separately from image:
+
+```javascript
+// Audio availability is independent of image availability.
+const audioStatus = await LanguageModel.availability({
+  expectedInputs: [{ type: "audio" }]
+});
+
+const session = await LanguageModel.create({
+  expectedInputs: [{ type: "text" }, { type: "audio" }]
+});
+
+const stream = session.promptStreaming([
+  {
+    role: "user",
+    content: [
+      { type: "text", value: "Transcribe and summarize this clip." },
+      { type: "audio", value: audioBlob }   // AudioBuffer | Blob | ArrayBuffer
+    ]
+  }
+]);
+```
+
+Output is always text. Keep audio on its own session so a device without a GPU still gets full image support.
+
 Older Canary builds that predate the `expectedInputs` overload may throw rather than return `"unavailable"`. Guard with `try/catch` if you need to support those:
 
 ```javascript

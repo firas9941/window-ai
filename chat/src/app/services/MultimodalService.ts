@@ -38,7 +38,7 @@ export type AvailabilityState = 'available' | 'downloadable' | 'downloading' | '
  * Kept inside this module only — do NOT add to dom-chromium-ai.d.ts.
  */
 export interface MultimodalContentPart {
-  type: 'text' | 'image';
+  type: 'text' | 'image' | 'audio';
   value: string | Blob | ImageBitmap;
 }
 
@@ -68,6 +68,58 @@ export const getAvailability = async (): Promise<AvailabilityState> => {
   try {
     return (await LanguageModel.availability({
       expectedInputs: [{ type: 'image' }],
+    })) as AvailabilityState;
+  } catch {
+    return 'unavailable';
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Audio input (Prompt API text + audio). Kept on its OWN session and
+// availability check so audio's GPU requirement never gates image-only use.
+// ---------------------------------------------------------------------------
+
+/** Module-scope audio session — lazy-initialized on first promptWithAudio call. */
+let audioSessionPromise: Promise<LanguageModel> | null = null;
+
+function getOrCreateAudioSession(): Promise<LanguageModel> {
+  if (audioSessionPromise) return audioSessionPromise;
+  audioSessionPromise = LanguageModel.create({
+    expectedInputs: [{ type: 'text', languages: ['en'] }, { type: 'audio' }],
+    expectedOutputs: [{ type: 'text', languages: ['en'] }],
+  }).catch((err: unknown) => {
+    // Remove failed promise so the next call retries cleanly.
+    audioSessionPromise = null;
+    throw err;
+  });
+  return audioSessionPromise;
+}
+
+/**
+ * Prompts the model with a text question and an audio clip (Blob).
+ * Audio input requires a GPU. Returns a ReadableStream<string> of text chunks.
+ */
+export async function promptWithAudio(
+  text: string,
+  audio: Blob,
+  opts?: { signal?: AbortSignal }
+): Promise<ReadableStream<string>> {
+  const session = (await getOrCreateAudioSession()) as unknown as MultimodalLanguageModel;
+  return session.promptStreaming(
+    [{ role: 'user', content: [{ type: 'text', value: text }, { type: 'audio', value: audio }] }],
+    { signal: opts?.signal }
+  );
+}
+
+/**
+ * Returns the availability of audio input (separate from image; requires a GPU).
+ * Returns 'unavailable' when LanguageModel is absent or the options throw.
+ */
+export const getAudioAvailability = async (): Promise<AvailabilityState> => {
+  if (typeof LanguageModel === 'undefined') return 'unavailable';
+  try {
+    return (await LanguageModel.availability({
+      expectedInputs: [{ type: 'audio' }],
     })) as AvailabilityState;
   } catch {
     return 'unavailable';
@@ -108,10 +160,11 @@ export const createWithProgress = async (
  * Call on page unmount to release model resources.
  */
 export const destroyAllSessions = (): void => {
-  if (sessionPromise) {
+  for (const s of [sessionPromise, audioSessionPromise]) {
     // Intentionally swallow errors — destroy is best-effort cleanup on unmount.
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    sessionPromise.then((s) => s.destroy()).catch(() => {});
-    sessionPromise = null;
+    s?.then((session) => session.destroy()).catch(() => {});
   }
+  sessionPromise = null;
+  audioSessionPromise = null;
 };

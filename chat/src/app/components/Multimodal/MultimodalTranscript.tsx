@@ -62,6 +62,13 @@ export const MultimodalTranscript: React.FC<MultimodalTranscriptProps> = ({
                     className="max-w-full rounded-lg mb-2 max-h-48 object-cover"
                   />
                 )}
+                {msg.attachedAudioUrl && (
+                  <audio
+                    controls
+                    src={msg.attachedAudioUrl}
+                    className="w-full mb-2"
+                  />
+                )}
                 <div className="prose prose-sm prose-invert max-w-none">
                   <Markdown>{msg.text}</Markdown>
                 </div>

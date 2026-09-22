@@ -4,7 +4,7 @@ import { MultimodalTranscript } from './MultimodalTranscript';
 import { MultimodalInput } from './MultimodalInput';
 import { MultimodalWebcam } from './MultimodalWebcam';
 import { validateImageFile } from './imageFileValidation';
-import { promptWithImage } from '../../services/MultimodalService';
+import { promptWithImage, promptWithAudio, getAudioAvailability } from '../../services/MultimodalService';
 
 interface MultimodalChatPanelProps {
   messages: Message[];
@@ -29,14 +29,46 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
   // Phase 11: live mode state
   const [isLiveActive, setIsLiveActive] = useState(false);
+  // Audio input (separate, GPU-gated capability; the image path is unaffected)
+  const [pendingAudio, setPendingAudio] = useState<Blob | null>(null);
+  const [audioAvailable, setAudioAvailable] = useState(false);
 
   // dragCounterRef prevents flicker when cursor crosses child elements (Pattern 4 / Pitfall 4)
   const dragCounterRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
 
-  // Map of userMessageId → Blob for retry re-prompt (Option B — no Message type edit needed)
-  const pendingResendBlobsRef = useRef<Map<string, Blob>>(new Map());
+  // Map of userMessageId → { blob, kind } for retry re-prompt (kind picks image vs audio path)
+  const pendingResendBlobsRef = useRef<Map<string, { blob: Blob; kind: 'image' | 'audio' }>>(
+    new Map(),
+  );
+
+  // Attach helpers — image and audio are mutually exclusive (one attachment per message).
+  const attachImage = useCallback((blob: Blob | null) => {
+    setPendingImage(blob);
+    if (blob) setPendingAudio(null);
+  }, []);
+  const attachAudio = useCallback((blob: Blob | null) => {
+    setPendingAudio(blob);
+    if (blob) setPendingImage(null);
+  }, []);
+
+  // Probe audio availability once — separate from the page's image availability so a
+  // no-GPU device (audio 'unavailable') still gets the full image demo.
+  useEffect(() => {
+    let cancelled = false;
+    getAudioAvailability()
+      .then((a) => {
+        if (!cancelled) setAudioAvailable(a !== 'unavailable');
+      })
+      .catch(() => {
+        /* leave audioAvailable = false */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Phase 11: live mode appends each frame to the transcript as a new user+assistant pair.
   // handleLiveFrame creates both messages and returns the assistant streamingId so subsequent
@@ -70,13 +102,23 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
   // runPrompt: shared streaming loop invoked by both handleSend and handleRetry
   // ---------------------------------------------------------------------------
   const runPrompt = useCallback(
-    async (promptText: string, blob: Blob, streamingId: string) => {
+    async (
+      promptText: string,
+      blob: Blob,
+      streamingId: string,
+      kind: 'image' | 'audio' = 'image',
+    ) => {
       setPageState('prompting');
       abortControllerRef.current = new AbortController();
       try {
-        const stream = await promptWithImage(promptText, blob, {
-          signal: abortControllerRef.current.signal,
-        });
+        const stream =
+          kind === 'audio'
+            ? await promptWithAudio(promptText, blob, {
+                signal: abortControllerRef.current.signal,
+              })
+            : await promptWithImage(promptText, blob, {
+                signal: abortControllerRef.current.signal,
+              });
         const reader = stream.getReader();
         // Pitfall 1: use reader.read() loop, NOT for-await; releaseLock in finally
         try {
@@ -99,10 +141,11 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
           return;
         }
         const message = err instanceof Error ? err.message : 'Unknown error';
+        const noun = kind === 'audio' ? 'audio' : 'image';
         setMessages((prev) =>
           prev.map((m) =>
             m.id === streamingId
-              ? { ...m, text: '', error: `Couldn't process image — ${message}` }
+              ? { ...m, text: '', error: `Couldn't process ${noun} — ${message}` }
               : m,
           ),
         );
@@ -124,35 +167,51 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
   // handleSend: commits user message + empty assistant bubble, then streams
   // ---------------------------------------------------------------------------
   const handleSend = useCallback(async () => {
-    if (!pendingImage || !text.trim() || pageState !== 'ready') return;
+    // Audio takes precedence when both somehow set; normally they're mutually exclusive.
+    const attachment = pendingAudio
+      ? { blob: pendingAudio, kind: 'audio' as const }
+      : pendingImage
+        ? { blob: pendingImage, kind: 'image' as const }
+        : null;
+    if (!attachment || !text.trim() || pageState !== 'ready') return;
 
     // 1. Create object URL at COMMIT TIME (not for the pending preview — Pitfall 2)
-    const objectUrl = URL.createObjectURL(pendingImage);
+    const objectUrl = URL.createObjectURL(attachment.blob);
     objectUrlSetRef.current.add(objectUrl);
 
     // 2. Capture current values before resetting state
     const userText = text.trim();
-    const userImage = pendingImage;
     const userMsgId = crypto.randomUUID();
     const streamingId = crypto.randomUUID();
 
-    // 3. Append user + empty assistant messages
+    // 3. Append user + empty assistant messages (image or audio attachment URL)
     setMessages((prev) => [
       ...prev,
-      { id: userMsgId, role: 'user', text: userText, attachedImageUrl: objectUrl },
+      {
+        id: userMsgId,
+        role: 'user',
+        text: userText,
+        ...(attachment.kind === 'audio'
+          ? { attachedAudioUrl: objectUrl }
+          : { attachedImageUrl: objectUrl }),
+      },
       { id: streamingId, role: 'assistant', text: '' },
     ]);
 
-    // 4. Store blob for potential retry
-    pendingResendBlobsRef.current.set(userMsgId, userImage);
+    // 4. Store blob + kind for potential retry
+    pendingResendBlobsRef.current.set(userMsgId, {
+      blob: attachment.blob,
+      kind: attachment.kind,
+    });
 
     // 5. Reset input
     setText('');
     setPendingImage(null);
+    setPendingAudio(null);
 
     // 6. Stream response
-    await runPrompt(userText, userImage, streamingId);
-  }, [pendingImage, text, pageState, objectUrlSetRef, setMessages, runPrompt]);
+    await runPrompt(userText, attachment.blob, streamingId, attachment.kind);
+  }, [pendingImage, pendingAudio, text, pageState, objectUrlSetRef, setMessages, runPrompt]);
 
   // ---------------------------------------------------------------------------
   // handleRetry: removes the failed assistant bubble and re-prompts with stored blob
@@ -175,9 +234,9 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
 
       if (!userMsg) return;
 
-      // Retrieve the original blob from the store
-      const blob = pendingResendBlobsRef.current.get(userMsg.id);
-      if (!blob) {
+      // Retrieve the original blob + kind from the store
+      const stored = pendingResendBlobsRef.current.get(userMsg.id);
+      if (!stored) {
         // Blob no longer available — remove the error bubble so user can re-attach
         setMessages((prev) => prev.filter((m) => m.id !== assistantMessageId));
         return;
@@ -193,8 +252,8 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
         ),
       );
 
-      // Re-prompt with the same text and blob
-      await runPrompt(userMsg.text, blob, newStreamingId);
+      // Re-prompt with the same text, blob, and media kind
+      await runPrompt(userMsg.text, stored.blob, newStreamingId, stored.kind);
     },
     [setMessages, runPrompt, pageState],
   );
@@ -232,7 +291,7 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
       return;
     }
     setMimeError(null);
-    setPendingImage(file);
+    attachImage(file);
   };
 
   // ---------------------------------------------------------------------------
@@ -251,7 +310,24 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
       return;
     }
     setMimeError(null);
-    setPendingImage(file);
+    attachImage(file);
+  };
+
+  // ---------------------------------------------------------------------------
+  // Audio upload — a Blob sent via the Prompt API's audio input (requires a GPU).
+  // ---------------------------------------------------------------------------
+  const handleAudioUploadClick = () => audioInputRef.current?.click();
+
+  const handleAudioFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('audio/')) {
+      setMimeError('Please choose an audio file (mp3, wav, ogg, m4a, …)');
+      return;
+    }
+    setMimeError(null);
+    attachAudio(file);
   };
 
   return (
@@ -305,7 +381,9 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
           text={text}
           setText={setText}
           pendingImage={pendingImage}
-          setPendingImage={setPendingImage}
+          setPendingImage={attachImage}
+          pendingAudio={pendingAudio}
+          setPendingAudio={setPendingAudio}
           onSend={handleSend}
           pageState={pageState}
           mimeError={mimeError}
@@ -315,7 +393,7 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
             <MultimodalWebcam
               pageState={pageState}
               livePrompt={text}
-              onFrameAttach={(blob) => setPendingImage(blob)}
+              onFrameAttach={(blob) => attachImage(blob)}
               setIsLiveActive={setIsLiveActive}
               onLiveFrame={handleLiveFrame}
               onLiveChunk={handleLiveChunk}
@@ -351,6 +429,40 @@ export const MultimodalChatPanel: React.FC<MultimodalChatPanelProps> = ({
                     accept="image/png,image/jpeg,image/webp"
                     className="hidden"
                     onChange={handleFileChange}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAudioUploadClick}
+                    disabled={!audioAvailable || isLiveActive || pageState === 'prompting'}
+                    title={audioAvailable ? undefined : 'Audio input needs a GPU (Chrome 148+)'}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                  >
+                    {/* Audio (musical note) SVG icon */}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M9 18V5l12-2v13" />
+                      <circle cx="6" cy="18" r="3" />
+                      <circle cx="18" cy="16" r="3" />
+                    </svg>
+                    Upload audio
+                  </button>
+                  <input
+                    ref={audioInputRef}
+                    type="file"
+                    accept="audio/*"
+                    className="hidden"
+                    onChange={handleAudioFileChange}
                     tabIndex={-1}
                     aria-hidden="true"
                   />

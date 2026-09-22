@@ -7,6 +7,8 @@ interface MultimodalInputProps {
   setText: (text: string) => void;
   pendingImage: Blob | null;
   setPendingImage: (blob: Blob | null) => void;
+  pendingAudio: Blob | null;
+  setPendingAudio: (blob: Blob | null) => void;
   onSend: () => void;
   pageState: PageState;
   /** Lifted from ChatPanel so both drop (ChatPanel) and paste (Input) share the same error state */
@@ -23,6 +25,8 @@ export const MultimodalInput: React.FC<MultimodalInputProps> = ({
   setText,
   pendingImage,
   setPendingImage,
+  pendingAudio,
+  setPendingAudio,
   onSend,
   pageState,
   mimeError,
@@ -58,6 +62,21 @@ export const MultimodalInput: React.FC<MultimodalInputProps> = ({
     };
   }, [pendingImage]);
 
+  // Same object-URL lifecycle for the pending audio clip's preview player.
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pendingAudio) {
+      setAudioPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(pendingAudio);
+    setAudioPreviewUrl(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [pendingAudio]);
+
   const handleImageFile = (file: File) => {
     const result = validateImageFile(file);
     if (!result.valid) {
@@ -78,7 +97,11 @@ export const MultimodalInput: React.FC<MultimodalInputProps> = ({
     if (file) handleImageFile(file);
   };
 
-  const canSend = !isLiveActive && text.trim().length > 0 && pendingImage !== null && pageState === 'ready';
+  const canSend =
+    !isLiveActive &&
+    text.trim().length > 0 &&
+    (pendingImage !== null || pendingAudio !== null) &&
+    pageState === 'ready';
 
   const sendButtonTooltip =
     pageState === 'unavailable'
@@ -89,10 +112,10 @@ export const MultimodalInput: React.FC<MultimodalInputProps> = ({
           ? 'Checking availability…'
           : pageState === 'error'
             ? 'An error occurred — please reload the page'
-            : pendingImage === null
-              ? 'Attach an image first'
+            : pendingImage === null && pendingAudio === null
+              ? 'Attach an image or audio clip first'
               : text.trim().length === 0
-                ? 'Type a question about the image'
+                ? 'Type a question about the attachment'
                 : undefined;
 
   return (
@@ -117,9 +140,21 @@ export const MultimodalInput: React.FC<MultimodalInputProps> = ({
           </button>
         </div>
       )}
+      {pendingAudio && audioPreviewUrl && (
+        <div className="relative mb-2 pr-6 inline-block align-top">
+          <audio controls src={audioPreviewUrl} className="max-w-xs" />
+          <button
+            onClick={() => setPendingAudio(null)}
+            aria-label="Remove attached audio"
+            className="absolute -top-2 right-0 w-5 h-5 rounded-full bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-800 text-xs flex items-center justify-center hover:bg-red-600 dark:hover:bg-red-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+          >
+            ×
+          </button>
+        </div>
+      )}
       <textarea
         className={`w-full resize-none bg-transparent outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm font-medium min-h-[48px] max-h-[120px] overflow-y-auto focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800${isLiveActive ? ' opacity-60 cursor-not-allowed' : ''}`}
-        placeholder="Upload, drop, or paste (⌘V) an image — then ask me about it"
+        placeholder="Upload an image or audio clip (or drop/paste an image) — then ask me about it"
         value={text}
         onChange={(e) => setText(e.target.value)}
         onPaste={handlePaste}
