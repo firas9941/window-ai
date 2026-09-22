@@ -220,7 +220,7 @@ export const ProofreaderPage: React.FC = () => {
         {pageState === 'unavailable' && (
           <MissingFlagBanner
             title="Proofreader API isn't enabled in this browser."
-            body="Enable the flags below in Chrome 146+ Canary, then reload."
+            body="Enable the flags below in Chrome Canary, then reload."
             flags={[
               {
                 name: 'Optimization Guide On Device',
@@ -229,11 +229,11 @@ export const ProofreaderPage: React.FC = () => {
               },
               {
                 name: 'Proofreader API',
-                url: 'chrome://flags/#proofreader-api-for-gemini-nano',
+                url: 'chrome://flags/#proofreader-api',
                 note: 'set to "Enabled"',
               },
             ]}
-            browserRequirement="Chrome 146+ Canary"
+            browserRequirement="Chrome Canary (behind a flag)"
           />
         )}
         <ProofreaderHeader />

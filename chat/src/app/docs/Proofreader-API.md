@@ -15,9 +15,9 @@ A session is **language-scoped**: each one targets one or more `expectedInputLan
 
 ### Browser Support
 
-- Chrome 150 desktop (Windows, macOS, Linux) — behind a flag
+- Chrome Canary desktop (Windows, macOS, Linux) — behind a flag
 - Requires Gemini Nano on-device (≈ 22 GB free disk, 4 GB+ VRAM)
-- Still origin trial / behind a flag as of Chrome 150 — not yet stable. Enable `chrome://flags/#proofreader-api-for-gemini-nano` for local dev, or register an origin-trial token for a deployed origin.
+- Not yet stable. The origin trial ran Chrome 141–145 and has ended, so enable `chrome://flags/#proofreader-api` on current Canary for local dev.
 
 ### Setup Instructions
 
@@ -29,7 +29,7 @@ A session is **language-scoped**: each one targets one or more `expectedInputLan
 
 2. **Enable the Proofreader API**:
    ```
-   chrome://flags/#proofreader-api-for-gemini-nano
+   chrome://flags/#proofreader-api
    ```
    Set to **Enabled** and restart Chrome.
 
@@ -68,6 +68,8 @@ const proofreader = await Proofreader.create({
 - `includeCorrectionTypes` — when `true`, each correction reports `types[]` (e.g. `"spelling"`, `"grammar"`).
 - `includeCorrectionExplanations` — when `true`, each correction reports a human-readable `explanation`.
 - `correctionExplanationLanguage` — BCP 47 tag for the explanation text (independent of the input language).
+
+> **Chrome support note:** as of late 2026, Chrome does **not** yet honor `includeCorrectionTypes`, `includeCorrectionExplanations`, or `correctionExplanationLanguage` — passing them can make `create()` reject with `NotSupportedError`, and `types` / `explanation` come back `undefined`. For a reliable session today, create with only `expectedInputLanguages` and add the richer options back once Chrome ships support. (Microsoft Edge, backed by Phi-4-mini, does honor them.)
 
 ### Proofreading Text
 

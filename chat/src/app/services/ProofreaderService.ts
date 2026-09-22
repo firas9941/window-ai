@@ -1,4 +1,5 @@
-// Ambient types for the Proofreader API (Chrome 146+ Canary, EPP flag).
+// Ambient types for the Proofreader API (Chrome origin trial 141–145; now behind
+// chrome://flags/#proofreader-api on Canary).
 // These declarations are local to this module so the webpack/babel compilation
 // can resolve them. The canonical authoritative types live in dom-chromium-ai.d.ts.
 declare global {
@@ -61,7 +62,7 @@ declare global {
   }
 }
 
-/** Language codes supported by the Proofreader API (Chrome 149+). */
+/** Language codes the Proofreader demo offers. */
 export type ProofreaderLanguageCode = 'en' | 'es' | 'ja' | 'de' | 'fr';
 
 /** Human-readable labels for the supported language codes. */
@@ -79,18 +80,47 @@ export const LOCAL_STORAGE_KEY = 'window-ai.proofreader.language';
 /** Module-scope session pool keyed by language code. NOT exported — use the module functions. */
 const sessionPool = new Map<string, Promise<Proofreader>>();
 
+/**
+ * Create a Proofreader session.
+ *
+ * Chrome's current build does NOT honor includeCorrectionTypes /
+ * includeCorrectionExplanations / correctionExplanationLanguage — passing them
+ * makes create() reject with NotSupportedError, which is what broke proofreading
+ * on Canary. We try the richer options first (so per-type badges and explanations
+ * light up automatically if/when Chrome ships support), then fall back to the
+ * minimal supported set. See https://developer.chrome.com/docs/ai/proofreader-api
+ */
+async function createSession(
+  language: ProofreaderLanguageCode,
+  monitor?: (m: AICreateMonitor) => void
+): Promise<Proofreader> {
+  const supported: ProofreaderCreateOptions = { expectedInputLanguages: [language] };
+  if (monitor) {
+    supported.monitor = monitor;
+  }
+  try {
+    return await window.Proofreader.create({
+      ...supported,
+      includeCorrectionTypes: true,
+      includeCorrectionExplanations: true,
+      correctionExplanationLanguage: 'en',
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'NotSupportedError') {
+      // Retry with only the options the current Chrome build accepts.
+      return window.Proofreader.create(supported);
+    }
+    throw err;
+  }
+}
+
 /** Returns a cached session for the given language, or creates and caches a new one. */
 function getOrCreateSession(language: ProofreaderLanguageCode): Promise<Proofreader> {
   const cached = sessionPool.get(language);
   if (cached) {
     return cached;
   }
-  const promise = window.Proofreader.create({
-    includeCorrectionTypes: true,
-    includeCorrectionExplanations: true,
-    correctionExplanationLanguage: 'en',
-    expectedInputLanguages: [language],
-  }).catch((err: unknown) => {
+  const promise = createSession(language).catch((err: unknown) => {
     // Remove failed entry so the next call retries cleanly.
     sessionPool.delete(language);
     throw err;
@@ -149,16 +179,10 @@ export const createWithProgress = async (
   language: ProofreaderLanguageCode,
   onProgress: (pct: number) => void
 ): Promise<Proofreader> => {
-  const promise = window.Proofreader.create({
-    includeCorrectionTypes: true,
-    includeCorrectionExplanations: true,
-    correctionExplanationLanguage: 'en',
-    expectedInputLanguages: [language],
-    monitor(m: AICreateMonitor) {
-      m.addEventListener('downloadprogress', (e: ProgressEvent) => {
-        onProgress(e.loaded != null ? e.loaded * 100 : 0);
-      });
-    },
+  const promise = createSession(language, (m: AICreateMonitor) => {
+    m.addEventListener('downloadprogress', (e: ProgressEvent) => {
+      onProgress(e.loaded != null ? e.loaded * 100 : 0);
+    });
   });
   // Store in pool before awaiting so proofread() reuses this session.
   sessionPool.set(language, promise);
