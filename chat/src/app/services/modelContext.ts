@@ -31,3 +31,32 @@ export function getModelContext(): ModelContext | undefined {
 export function isModelContextAvailable(): boolean {
   return getModelContext() !== undefined;
 }
+
+/**
+ * Registers a WebMCP tool, swallowing the intentional teardown rejection.
+ *
+ * `registerTool` is typed `void` (per spec), but Chrome's implementation returns
+ * a Promise bound to the registration's lifetime that REJECTS with `AbortError`
+ * when `options.signal` aborts (React unmount / StrictMode / HMR). Nothing awaits
+ * that promise, so on `controller.abort()` it surfaces as an
+ * "Uncaught (in promise) AbortError: signal is aborted without reason". We attach
+ * a `.catch` that ignores AbortError (intentional) and logs anything else.
+ *
+ * A SYNCHRONOUS throw (e.g. "Duplicate tool name") still propagates to the caller,
+ * so existing per-tool try/catch handling is unchanged. No-op on builds where
+ * `registerTool` returns `void`.
+ */
+export function registerToolSafely(
+  modelContext: ModelContext,
+  tool: ModelContextTool,
+  options?: ModelContextRegisterToolOptions,
+): void {
+  const result = modelContext.registerTool(tool, options) as unknown;
+  if (result != null && typeof (result as { then?: unknown }).then === 'function') {
+    (result as Promise<unknown>).catch((err: unknown) => {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      // eslint-disable-next-line no-console
+      console.error('[WebMCP] registerTool rejected:', err);
+    });
+  }
+}

@@ -31,6 +31,12 @@ declare global {
     /**
      * Registers a single tool with the user agent without removing others.
      * Pass an `AbortSignal` via `options` to deregister the tool.
+     *
+     * NOTE: the spec return type is `void`, but Chrome's implementation returns a
+     * Promise bound to the registration lifetime that REJECTS with `AbortError`
+     * when the signal aborts. Prefer `registerToolSafely()` in
+     * services/modelContext.ts, which swallows that intentional teardown rejection
+     * instead of letting it surface as an uncaught promise rejection.
      */
     registerTool(tool: ModelContextTool, options?: ModelContextRegisterToolOptions): void;
     /**

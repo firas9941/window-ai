@@ -13,7 +13,7 @@
 
 import * as MealPlanStore from './MealPlanStore';
 import { wrapToolsWithEvents, type ToolCallEvent } from './toolAdapter';
-import { getModelContext } from './modelContext';
+import { getModelContext, registerToolSafely } from './modelContext';
 import { getRecipes } from './RecipePersistence';
 import * as recipeCarouselRegistry from './recipeCarouselRegistry';
 
@@ -182,7 +182,7 @@ export function registerGenUITools(): AbortController | null {
   // (4) Register each tool; swallow DUPLICATE_NAME_PATTERN per Pitfall 1
   for (const tool of wrapped) {
     try {
-      modelContext.registerTool(tool, { signal: controller.signal });
+      registerToolSafely(modelContext, tool, { signal: controller.signal });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       if (DUPLICATE_NAME_PATTERN.test(message)) {

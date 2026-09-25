@@ -17,7 +17,7 @@ import { StepsList } from './RecipeWorkbench/StepsList';
 import { MissingFlagBanner } from './MissingFlagBanner';
 import { RECIPE_TOOLS } from '../services/recipeTools';
 import { wrapToolsWithEvents, type ToolCallEvent } from '../services/toolAdapter';
-import { getModelContext, isModelContextAvailable } from '../services/modelContext';
+import { getModelContext, isModelContextAvailable, registerToolSafely } from '../services/modelContext';
 import { subscribeRecipeStore, setActiveRecipeId } from '../services/recipeStore';
 import { ToolRegistrationPill, type ToolRegistrationStatus } from './RecipeWorkbench/ToolRegistrationPill';
 import { AgentDrawer } from './RecipeWorkbench/AgentDrawer';
@@ -192,7 +192,7 @@ export const RecipeWorkbenchPage: React.FC = () => {
     let fatalError: unknown = null;
     for (const tool of wrapped) {
       try {
-        modelContext.registerTool(tool, { signal: controller.signal });
+        registerToolSafely(modelContext, tool, { signal: controller.signal });
         registered.push(tool.name);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
